@@ -1,8 +1,7 @@
 'use client'; // บังคับให้หน้านี้ทำงานฝั่ง Client เพื่อให้ระบบค้นหาพิมพ์ปุ๊บเปลี่ยนปั๊บได้
 
 import { useState } from 'react';
-import ProductCard from '@/components/ProductCard';
-
+import ProductCard from '../../components/ProductCard';
 // 1. จำลองฐานข้อมูลสินค้า (Mock Data)
 const mockProducts = [
   { id: '1', name: 'Jinko Solar Tiger Pro 550W', category: 'แผงโซล่าเซลล์', price: 4500, capacity: '550W', imageUrl: '☀️' },
