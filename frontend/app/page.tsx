@@ -1,3 +1,4 @@
+import Link from 'next/link';
 export default function Home() {
   return (
     <div className="w-full">
@@ -21,13 +22,13 @@ export default function Home() {
               พร้อมระบบจัดการคำสั่งซื้อและขอใบเสนอราคาสำหรับผู้รับเหมาและลูกค้าทั่วไป
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3.5 px-8 rounded-xl shadow-lg shadow-blue-600/30 transition-all">
-                ดูแคตตาล็อกสินค้า
-              </button>
-              <button className="bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 text-slate-700 font-medium py-3.5 px-8 rounded-xl transition-all shadow-sm">
-                ประเมินความคุ้มค่า
-              </button>
-            </div>
+  <Link href="/products" className="inline-block text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-3.5 px-8 rounded-xl shadow-lg shadow-blue-600/30 transition-all">
+    ดูแคตตาล็อกสินค้า
+  </Link>
+  <Link href="/calculator" className="inline-block text-center bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 text-slate-700 font-medium py-3.5 px-8 rounded-xl transition-all shadow-sm">
+    ประเมินความคุ้มค่า
+  </Link>
+</div>
           </div>
         </div>
       </section>
