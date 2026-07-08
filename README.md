@@ -98,7 +98,42 @@
   * ตรวจสอบและจัดการเคลียร์ Data Log ที่ไม่จำเป็นอย่างสม่ำเสมอเพื่อคงความเร็วของระบบ
 * **Corrective Maintenance (การบำรุงรักษาเชิงแก้ไข):**
   * ทีม Support คอยเฝ้าระวัง (Monitor) และสแตนด์บายแก้ไข Bug หรือข้อผิดพลาดตามกำหนดเวลาใน Severity Level
+```mermaid
+flowchart LR
+    subgraph Client ["1. Presentation Layer (Client)"]
+        Browser["Web Browser (PC / Mobile)"]
+        UI["Next.js UI & Tailwind"]
+        LocalStore[("Local Storage")]
+        Browser <--> UI
+        UI <--> LocalStore
+    end
 
+    subgraph Server ["2. Application Layer (Server)"]
+        API["Next.js API Routes"]
+        Auth["Auth Service"]
+        OrderSys["Order Management"]
+        Calc["Solar Calculator"]
+        API --- Auth
+        API --- OrderSys
+        API --- Calc
+    end
+
+    subgraph Database ["3. Data Layer (Database)"]
+        DB[("SQL Database")]
+        TB_User["Table: Users"]
+        TB_Prod["Table: Products"]
+        TB_Order["Table: Orders"]
+        DB --- TB_User
+        DB --- TB_Prod
+        DB --- TB_Order
+    end
+
+    UI <-->|HTTP Requests| API
+    API <-->|SQL Queries| DB
+
+    style Client fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style Server fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style Database fill:#f1f8e9,stroke:#2e7d32,stroke-width:2px
 ### 📞 ช่องทางการติดต่อและการแจ้งปัญหา (Helpdesk)
 * **Email:** support@solar-ecommerce.com
 * **Line Official / Telephone:** เปิดทำการ วันจันทร์ - ศุกร์ เวลา 08:30 - 17:30 น.
