@@ -44,8 +44,15 @@ export default function LoginPage() {
 
     // จำลองเวลาดีเลย์ของเซิร์ฟเวอร์ 0.8 วินาที
     setTimeout(() => {
-      const user = mockUsers.find(u => u.email === email && u.password === password);
-
+      // 1. ดึงข้อมูลบัญชีที่ลูกค้าสมัครเข้ามาใหม่จาก Local Storage
+      const registeredUsers = JSON.parse(localStorage.getItem('solar_users') || '[]');
+      
+      // 2. นำข้อมูลทดสอบ (mockUsers) มารวมกับบัญชีที่สมัครใหม่
+      const allValidUsers = [...mockUsers, ...registeredUsers];
+      
+      // 3. ค้นหาว่ามีอีเมลและรหัสผ่านตรงกับในระบบหรือไม่
+      const user = allValidUsers.find((u: any) => u.email === email && u.password === password);
+  
       if (user) {
         // 🔐 ลบ Password ออกก่อนเก็บเป็น JSON Session ลง Local Storage
         const sessionData = {
@@ -59,7 +66,7 @@ export default function LoginPage() {
         
         alert(`✅ เข้าสู่ระบบสำเร็จ!\nยินดีต้อนรับ: ${user.name}\nสิทธิ์การใช้งาน: ${user.role.toUpperCase()}`);
         
-        // เข้าสู่ระบบสำเร็จแล้วให้เด้งกลับไปหน้าแรก (หรือแก้เป็นหน้า Dashboard ได้)
+        // เข้าสู่ระบบสำเร็จแล้วให้เด้งกลับไปหน้าแรก
         router.push('/');
         router.refresh(); // รีเฟรชเพื่อให้ Navbar ดึงข้อมูลใหม่
       } else {
@@ -136,6 +143,16 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
+
+        {/* 🔗 ส่วนลิงก์ไปหน้าสมัครสมาชิกที่เพิ่มเข้ามาใหม่ */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-slate-600">
+            ยังไม่มีบัญชีผู้ใช้งาน?{' '}
+            <Link href="/register" className="font-bold text-blue-600 hover:text-blue-800 transition-colors">
+              สมัครสมาชิกที่นี่
+            </Link>
+          </p>
+        </div>
 
         {/* คู่มือสำหรับอาจารย์ทดสอบ (Mock Login Details) */}
         <div className="mt-8 pt-6 border-t border-slate-100">
