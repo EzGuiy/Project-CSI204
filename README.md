@@ -254,3 +254,4 @@ flowchart LR
     style Client fill:#f9f9f9,stroke:#333,stroke-width:2px
     style Server fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
     style Database fill:#f1f8e9,stroke:#2e7d32,stroke-width:2px
+  

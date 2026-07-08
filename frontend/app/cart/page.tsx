@@ -90,10 +90,10 @@ export default function CartPage() {
               <h3 className="text-xl font-bold text-slate-800 mb-2">ไม่มีสินค้าในตะกร้า</h3>
               <p className="text-slate-500 mb-6">กลับไปเลือกซื้อแผงโซล่าเซลล์และอุปกรณ์กันเถอะ</p>
               <Link href="/products" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                ไปที่แคตตาล็อกสินค้า
+                ไปที่รายการสินค้า
               </Link>
             </div>
-          )}
+          )}  
         </div>
 
         {/* ฝั่งขวา: สรุปยอดสั่งซื้อ */}

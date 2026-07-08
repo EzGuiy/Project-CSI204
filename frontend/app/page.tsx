@@ -29,7 +29,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
               <Link href="/products" className="inline-block text-center bg-blue-600 hover:bg-blue-500 text-white font-medium py-4 px-10 rounded-xl shadow-lg shadow-blue-600/40 transition-all hover:-translate-y-1">
-                ดูแคตตาล็อกสินค้า
+                ดูรายการสินค้า
               </Link>
               <Link href="/calculator" className="inline-block text-center bg-white/10 border border-white/30 hover:bg-white hover:text-slate-900 text-white font-medium py-4 px-10 rounded-xl transition-all shadow-sm hover:-translate-y-1">
                 ประเมินความคุ้มค่า

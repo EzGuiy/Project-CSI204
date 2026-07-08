@@ -20,30 +20,32 @@ export default function RootLayout({
       <body className={`${mitr.className} bg-slate-50 text-slate-800 antialiased flex flex-col min-h-screen`}>
         
         {/* Navbar */}
-        <nav className="w-full bg-white shadow-sm sticky top-0 z-50 border-b border-slate-200">
-           <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-              
-              {/* โลโก้ */}
-              <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <span className="text-3xl">☀️</span>
-                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Solar<span className="text-blue-600">Tech</span></h1>
-              </Link>
-              
-              {/* เมนูตรงกลาง */}
-              <div className="hidden md:flex space-x-8 items-center font-medium text-slate-600">
-                 <Link href="/" className="hover:text-blue-600 transition-colors">หน้าแรก</Link>
-                 <Link href="/products" className="hover:text-blue-600 transition-colors">แคตตาล็อกสินค้า</Link>
-                 <Link href="/calculator" className="hover:text-blue-600 transition-colors">ประเมินขนาดติดตั้ง</Link>
-              </div>
+       <nav className="w-full bg-slate-900 shadow-md sticky top-0 z-50 border-b border-slate-800">
+   <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+      
+      {/* โลโก้แบรนด์ */}
+      <Link href="/" className="flex items-center gap-3 group">
+        <span className="text-3xl grayscale group-hover:grayscale-0 transition-all">☀️</span>
+        <h1 className="text-2xl font-bold text-white tracking-wide">
+          Solar<span className="text-blue-500">Tech</span>
+          <span className="block text-[10px] font-medium text-slate-400 tracking-widest uppercase mt-0.5">Energy Solutions</span>
+        </h1>
+      </Link>
+      
+      {/* เมนู */}
+      <div className="hidden md:flex space-x-8 items-center font-medium text-slate-300 text-sm tracking-wide">
+         <Link href="/" className="hover:text-white transition-colors">หน้าแรก</Link>
+         <Link href="/products" className="hover:text-blue-400 transition-colors">รายการสินค้า</Link>
+         <Link href="/calculator" className="hover:text-blue-400 transition-colors">ประเมินขนาดติดตั้ง</Link>
+         <Link href="/about" className="hover:text-blue-400 transition-colors">เกี่ยวกับบริษัท</Link>
+      </div>
 
-              {/* ปุ่มตะกร้าสินค้าด้านขวา (เรียกใช้ Component ใหม่) */}
-              <div className="flex items-center gap-4">
-                 <CartBadge />
-              </div>
+      <div className="flex items-center gap-4">
+         <CartBadge />
+      </div>
 
-           </div>
-        </nav>
-
+   </div>
+</nav>
         {/* เนื้อหาหลัก */}
         <main className="flex-grow">
           {children}
