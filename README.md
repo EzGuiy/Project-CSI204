@@ -98,6 +98,7 @@
   * ตรวจสอบและจัดการเคลียร์ Data Log ที่ไม่จำเป็นอย่างสม่ำเสมอเพื่อคงความเร็วของระบบ
 * **Corrective Maintenance (การบำรุงรักษาเชิงแก้ไข):**
   * ทีม Support คอยเฝ้าระวัง (Monitor) และสแตนด์บายแก้ไข Bug หรือข้อผิดพลาดตามกำหนดเวลาใน Severity Level
+## 16. System Architecture
 ```mermaid
 flowchart LR
     subgraph Client ["1. Presentation Layer (Client)"]
