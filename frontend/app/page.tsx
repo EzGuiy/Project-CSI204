@@ -2,33 +2,39 @@ import Link from 'next/link';
 export default function Home() {
   return (
     <div className="w-full">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-slate-50 to-blue-50 py-32 overflow-hidden">
-        {/* วงกลมตกแต่งฉากหลัง */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full bg-blue-100 opacity-50 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-amber-100 opacity-50 blur-3xl"></div>
+      {/* Hero Section (อัปเดตใส่รูปภาพพื้นหลัง) */}
+      <section className="relative py-32 md:py-48 overflow-hidden">
+        
+        {/* ภาพพื้นหลัง */}
+        <div 
+          className="absolute inset-0 z-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('/bg.png')" }}
+        ></div>
+
+        {/* ฟิลเตอร์สีดำจางๆ (Overlay) เพื่อให้ตัวหนังสืออ่านง่าย */}
+        <div className="absolute inset-0 z-0 bg-slate-900/60 backdrop-blur-sm"></div>
 
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <div className="inline-block bg-blue-100 text-blue-700 font-medium px-4 py-1.5 rounded-full text-sm mb-4 border border-blue-200">
+            <div className="inline-block bg-white/10 backdrop-blur-md text-white font-medium px-4 py-1.5 rounded-full text-sm mb-4 border border-white/20">
               🌱 แพลตฟอร์มจัดจำหน่ายโซล่าเซลล์ B2B & B2C
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold text-slate-900 leading-tight">
+            <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight">
               ยกระดับธุรกิจด้วย <br className="hidden md:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">พลังงานสะอาดที่ยั่งยืน</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">พลังงานสะอาดที่ยั่งยืน</span>
             </h1>
-            <p className="text-xl text-slate-600 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-xl text-slate-200 leading-relaxed max-w-2xl mx-auto">
               ศูนย์รวมแผงโซล่าเซลล์ อินเวอร์เตอร์ และอุปกรณ์ติดตั้งคุณภาพระดับโลก
               พร้อมระบบจัดการคำสั่งซื้อและขอใบเสนอราคาสำหรับผู้รับเหมาและลูกค้าทั่วไป
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
-  <Link href="/products" className="inline-block text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-3.5 px-8 rounded-xl shadow-lg shadow-blue-600/30 transition-all">
-    ดูแคตตาล็อกสินค้า
-  </Link>
-  <Link href="/calculator" className="inline-block text-center bg-white border border-slate-300 hover:border-blue-500 hover:text-blue-600 text-slate-700 font-medium py-3.5 px-8 rounded-xl transition-all shadow-sm">
-    ประเมินความคุ้มค่า
-  </Link>
-</div>
+              <Link href="/products" className="inline-block text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-3.5 px-8 rounded-xl shadow-lg shadow-blue-600/30 transition-all">
+                ดูแคตตาล็อกสินค้า
+              </Link>
+              <Link href="/calculator" className="inline-block text-center bg-white/10 border border-white/30 hover:bg-white hover:text-slate-900 text-white font-medium py-3.5 px-8 rounded-xl transition-all shadow-sm">
+                ประเมินความคุ้มค่า
+              </Link>
+            </div>
           </div>
         </div>
       </section>
