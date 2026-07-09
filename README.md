@@ -162,11 +162,6 @@
 ## 14. Sequence Diagrams
 
 แผนภาพแสดงลำดับขั้นตอนการทำงานและการรับส่งข้อมูล (Message Interaction Flow) ระหว่าง Frontend, Backend และฐานข้อมูล SQL ในฟังก์ชันหลักที่สำคัญ ได้แก่:
-
-### 14.1 ขั้นตอนการสั่งซื้อสินค้าและขอใบเสนอราคา (Order & Quotation Process)
-> 📌 *[ นำรูปภาพ Sequence Diagram พาร์ตการสั่งซื้อมาแปะที่นี่ ]*
-
-### 14.2 ขั้นตอนการประมวลผลระบบคำนวณ (Solar Calculator Process)
 > <img width="1270" height="1289" alt="S__43106320" src="https://github.com/user-attachments/assets/c9003bae-5955-4bb1-89d5-b4e967faf5b3" />
 
 
