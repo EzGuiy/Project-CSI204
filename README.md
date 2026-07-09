@@ -145,7 +145,8 @@
 
 แผนภาพแสดงความสัมพันธ์และพฤติกรรมการใช้งานระบบ SolarTech ของผู้ใช้ทั้ง 3 กลุ่ม (Customer, Staff, Admin):
 
-> 📌 *[ นำรูปภาพ Use Case Diagram ของกลุ่มมาแปะที่นี่ โดยใช้รูปแบบ: `![Use Case Diagram](ลิงก์รูปภาพ)` ]*
+>  <img width="1427" height="1431" alt="Use Case Diagram pj drawio" src="https://github.com/user-attachments/assets/bf3abebe-08a5-44e6-8526-01c498b4549a" />
+
 
 ---
 
