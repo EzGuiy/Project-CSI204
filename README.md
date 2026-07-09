@@ -154,7 +154,8 @@
 
 แผนภาพแสดงโครงสร้างข้อมูล คลาส (Classes) และความสัมพันธ์ของวัตถุต่าง ๆ ภายในระบบ เช่น ข้อมูลสิทธิ์ บัญชีผู้ใช้ สินค้า ตะกร้าสินค้า และข้อมูลการสั่งซื้อ:
 
-> 📌 *[ นำรูปภาพ Class Diagram ของกลุ่มมาแปะที่นี่ โดยใช้รูปแบบ: `![Class Diagram](ลิงก์รูปภาพ)` ]*
+> <img width="1548" height="1058" alt="S__43106319" src="https://github.com/user-attachments/assets/6c256935-3b76-48b3-ab23-e5d5a681715a" />
+
 
 ---
 
@@ -166,7 +167,8 @@
 > 📌 *[ นำรูปภาพ Sequence Diagram พาร์ตการสั่งซื้อมาแปะที่นี่ ]*
 
 ### 14.2 ขั้นตอนการประมวลผลระบบคำนวณ (Solar Calculator Process)
-> 📌 *[ นำรูปภาพ Sequence Diagram พาร์ตการคำนวณโซล่าเซลล์มาแปะที่นี่ ]*
+> <img width="1270" height="1289" alt="S__43106320" src="https://github.com/user-attachments/assets/c9003bae-5955-4bb1-89d5-b4e967faf5b3" />
+
 
 ---
 
