@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-
+import { useRouter } from 'next/navigation';
 
 interface ProductProps {
   id: string;
@@ -13,8 +13,19 @@ interface ProductProps {
 }
 
 export default function ProductCard({ id, name, category, price, capacity, imageUrl }: ProductProps) {
-  
+  const router = useRouter();
+
   const addToCart = () => {
+    // 🔒 1. ตรวจสอบสถานะการล็อกอินก่อน
+    const session = localStorage.getItem('solar_session');
+    
+    if (!session) {
+      alert('❌ กรุณาล็อกอินหรือสมัครสมาชิกก่อนทำการเลือกซื้อสินค้าค่ะ');
+      router.push('/login'); 
+      return; // 🛑 จุดนี้สำคัญมาก! ต้องมี return เพื่อสั่งให้โปรแกรม "หยุดทำงานทันที" ไม่ให้รันไปเพิ่มของลงตะกร้า
+    }
+
+    // 🛒 2. ถ้ามี Session (ล็อกอินแล้ว) โค้ดถึงจะทำงานส่วนนี้ต่อได้
     const existingCart = JSON.parse(localStorage.getItem('solar_cart') || '[]');
     const existingItem = existingCart.find((item: any) => item.id === id);
     
@@ -33,10 +44,15 @@ export default function ProductCard({ id, name, category, price, capacity, image
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-xl hover:border-blue-200 transition-all duration-300 flex flex-col h-full group">
       
       {/* ส่วนรูปภาพ */}
-      <div className="h-48 bg-slate-50 relative flex items-center justify-center shrink-0 border-b border-slate-100">
-        <div className="text-7xl group-hover:scale-110 transition-transform duration-500 drop-shadow-md">
-          {imageUrl}
-        </div>
+      <div className="h-48 bg-white relative flex items-center justify-center shrink-0 border-b border-slate-100 overflow-hidden p-4">
+        
+        {/* เปลี่ยนจาก div ธรรมดา เป็นแท็ก img */}
+        <img 
+          src={imageUrl} 
+          alt={name}
+          className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 drop-shadow-sm"
+        />
+
         <div className="absolute top-3 left-3 bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded tracking-wide uppercase shadow-sm">
           {category}
         </div>

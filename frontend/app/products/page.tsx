@@ -2,14 +2,16 @@
 
 import { useState } from 'react';
 import ProductCard from '../../components/ProductCard';
+
 // 1. จำลองฐานข้อมูลสินค้า (Mock Data)
+// ⚠️ แก้ไข imageUrl ให้ตรงกับชื่อไฟล์รูปที่คุณใส่ไว้ในโฟลเดอร์ public
 const mockProducts = [
-  { id: '1', name: 'Jinko Solar Tiger Pro 550W', category: 'แผงโซล่าเซลล์', price: 4500, capacity: '550W', imageUrl: '☀️' },
-  { id: '2', name: 'Longi Hi-MO 5 540W', category: 'แผงโซล่าเซลล์', price: 4200, capacity: '540W', imageUrl: '☀️' },
-  { id: '3', name: 'Huawei SUN2000-5KTL', category: 'อินเวอร์เตอร์', price: 28500, capacity: '5kW', imageUrl: '⚡' },
-  { id: '4', name: 'Growatt MIN 3000TL-X', category: 'อินเวอร์เตอร์', price: 15900, capacity: '3kW', imageUrl: '⚡' },
-  { id: '5', name: 'รางอลูมิเนียม Mounting Rail 4.2m', category: 'อุปกรณ์ติดตั้ง', price: 650, capacity: '-', imageUrl: '🔧' },
-  { id: '6', name: 'แบตเตอรี่ลิเธียม Huawei LUNA2000', category: 'แบตเตอรี่', price: 95000, capacity: '5kWh', imageUrl: '🔋' },
+  { id: '1', name: 'Jinko Solar Tiger Pro 550W', category: 'แผงโซล่าเซลล์', price: 4500, capacity: '550W', imageUrl: '/Jiinko_550w.jpg' },
+  { id: '2', name: 'Longi Hi-MO 5 540W', category: 'แผงโซล่าเซลล์', price: 4200, capacity: '540W', imageUrl: '/OIP.jpg' },
+  { id: '3', name: 'Huawei SUN2000-5KTL', category: 'อินเวอร์เตอร์', price: 28500, capacity: '5kW', imageUrl: '/OIP(1).jpg' },
+  { id: '4', name: 'Growatt MIN 3000TL-X', category: 'อินเวอร์เตอร์', price: 15900, capacity: '3kW', imageUrl: '/OIP(1).jpg' },
+  { id: '5', name: 'รางอลูมิเนียม Mounting Rail 4.2m', category: 'อุปกรณ์ติดตั้ง', price: 650, capacity: '-', imageUrl: '/OIP(2).jpg' },
+  { id: '6', name: 'แบตเตอรี่ลิเธียม Huawei LUNA2000', category: 'แบตเตอรี่', price: 95000, capacity: '5kWh', imageUrl: '/OIP(3).jpg' }, // สมมติชื่อไฟล์ไปก่อน คุณสามารถแก้ให้ตรงกับไฟล์จริงได้เลยครับ
 ];
 
 export default function ProductsPage() {

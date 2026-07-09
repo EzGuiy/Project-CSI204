@@ -60,9 +60,13 @@ export default function CartPage() {
             cartItems.map(item => (
               <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-6 relative">
                 
-                <div className="w-20 h-20 bg-slate-50 rounded-xl flex items-center justify-center text-4xl border border-slate-100 shrink-0">
-                  {item.icon}
-                </div>
+                <div className="w-24 h-24 bg-white border border-slate-200 flex items-center justify-center rounded-xl p-2 shrink-0">
+    <img 
+    src={item.icon} 
+    alt={item.name}
+    className="w-full h-full object-contain drop-shadow-sm"
+  />
+</div>
 
                 <div className="flex-grow text-center sm:text-left">
                   <h3 className="font-bold text-slate-800 text-lg mb-1">{item.name}</h3>

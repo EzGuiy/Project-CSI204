@@ -66,9 +66,8 @@ export default function LoginPage() {
         
         alert(`✅ เข้าสู่ระบบสำเร็จ!\nยินดีต้อนรับ: ${user.name}\nสิทธิ์การใช้งาน: ${user.role.toUpperCase()}`);
         
-        // เข้าสู่ระบบสำเร็จแล้วให้เด้งกลับไปหน้าแรก
-        router.push('/');
-        router.refresh(); // รีเฟรชเพื่อให้ Navbar ดึงข้อมูลใหม่
+        // ✨ อัปเดตโค้ดตรงนี้: บังคับโหลดหน้าเว็บใหม่ทั้งหมด เพื่อให้ Navbar อัปเดตสถานะทันที
+        window.location.href = '/'; 
       } else {
         setError('❌ อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
       }
@@ -144,7 +143,7 @@ export default function LoginPage() {
           </div>
         </form>
 
-        {/* 🔗 ส่วนลิงก์ไปหน้าสมัครสมาชิกที่เพิ่มเข้ามาใหม่ */}
+        {/* 🔗 ส่วนลิงก์ไปหน้าสมัครสมาชิก */}
         <div className="mt-6 text-center">
           <p className="text-sm text-slate-600">
             ยังไม่มีบัญชีผู้ใช้งาน?{' '}
