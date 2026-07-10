@@ -43,7 +43,7 @@ export default function ChatWidget() {
               รอเปิดระบบเร็วๆ นี้
             </h4>
             <p className="text-slate-500 text-sm leading-relaxed max-w-[220px]">
-              ระบบแชทสำหรับติดต่อแอดมินและผู้ขาย กำลังอยู่ระหว่างการพัฒนา
+              ระบบแชทสำหรับติดต่อแอดมิน กำลังอยู่ระหว่างการพัฒนา
             </p>
 
             {/* Decorative animated dots */}
