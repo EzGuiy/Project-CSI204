@@ -179,7 +179,7 @@
 * **หน้าจอระบบคำนวณโซล่าเซลล์ (Solar Calculator Dashboard):** ช่องกรอกข้อมูลค่าไฟและประมวลผลขนาดแผงที่เหมาะสม
 * **หน้าจัดการตะกร้าและระบบเอกสาร (Cart & Checkout):** ระบบกดส่งใบสั่งซื้อและดาวน์โหลดใบเสนอราคา (PDF)
 
-> 🔗 *[ นำลิงก์เข้าชม Figma Project หรือภาพ Capture ของ Wireframe มาแปะใส่ตรงนี้ได้เลยครับ ]*
+> 🔗 (https://www.figma.com/design/WeojkzaXgryaHPOBCMEakY/Untitled?node-id=0-1&t=KVBF0JjkDKIRFrnN-1)
 
 ---
 
