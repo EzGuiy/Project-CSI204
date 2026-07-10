@@ -16,16 +16,14 @@ export default function ProductCard({ id, name, category, price, capacity, image
   const router = useRouter();
 
   const addToCart = () => {
-    // 🔒 1. ตรวจสอบสถานะการล็อกอินก่อน
     const session = localStorage.getItem('solar_session');
     
     if (!session) {
       alert('❌ กรุณาล็อกอินหรือสมัครสมาชิกก่อนทำการเลือกซื้อสินค้าค่ะ');
       router.push('/login'); 
-      return; // 🛑 จุดนี้สำคัญมาก! ต้องมี return เพื่อสั่งให้โปรแกรม "หยุดทำงานทันที" ไม่ให้รันไปเพิ่มของลงตะกร้า
+      return; 
     }
 
-    // 🛒 2. ถ้ามี Session (ล็อกอินแล้ว) โค้ดถึงจะทำงานส่วนนี้ต่อได้
     const existingCart = JSON.parse(localStorage.getItem('solar_cart') || '[]');
     const existingItem = existingCart.find((item: any) => item.id === id);
     
@@ -41,45 +39,42 @@ export default function ProductCard({ id, name, category, price, capacity, image
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-xl hover:border-blue-200 transition-all duration-300 flex flex-col h-full group">
+    <div className="group cursor-pointer flex flex-col h-full">
       
-      {/* ส่วนรูปภาพ */}
-      <div className="h-48 bg-white relative flex items-center justify-center shrink-0 border-b border-slate-100 overflow-hidden p-4">
-        
-        {/* เปลี่ยนจาก div ธรรมดา เป็นแท็ก img */}
+      {/* ⬜ ส่วนรูปภาพ (พื้นหลังสีเทาอ่อนแบบ Huawei) */}
+      <div className="bg-[#f7f7f7] aspect-square w-full relative flex items-center justify-center p-8 overflow-hidden rounded-sm">
         <img 
           src={imageUrl} 
           alt={name}
-          className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 drop-shadow-sm"
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
         />
-
-        <div className="absolute top-3 left-3 bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded tracking-wide uppercase shadow-sm">
-          {category}
-        </div>
       </div>
 
-      {/* ส่วนรายละเอียด */}
-      <div className="p-5 flex flex-col flex-grow">
-        <h3 className="text-lg font-bold text-slate-900 mb-2 leading-snug line-clamp-2">{name}</h3>
+      {/* 📝 ส่วนรายละเอียด (พื้นหลังขาว ไม่มีเส้นขอบ) */}
+      <div className="pt-5 flex flex-col flex-grow">
+        {/* ชื่อสินค้า */}
+        <h3 className="text-[17px] font-bold text-zinc-900 leading-snug mb-1 group-hover:text-red-600 transition-colors line-clamp-2">
+          {name}
+        </h3>
         
-        <p className="text-sm text-slate-600 mb-4">
-          กำลังไฟ: <span className="font-semibold text-slate-900">{capacity}</span>
+        {/* หมวดหมู่ และ สเปค */}
+        <p className="text-[13px] text-zinc-500 mb-4">
+          {category}
+          {capacity !== '-' && <span className="ml-2 pl-2 border-l border-zinc-300">กำลังไฟ: {capacity}</span>}
         </p>
         
-        {/* ส่วนราคาและปุ่ม */}
-        <div className="mt-auto pt-4 border-t border-slate-100 flex justify-between items-end gap-2">
-          <div>
-            <p className="text-xs text-slate-500 font-medium mb-1">ราคา (บาท)</p>
-            <p className="text-2xl font-black text-blue-700">
-              {price.toLocaleString()}
-            </p>
-          </div>
+        {/* ส่วนราคาและปุ่มสั่งซื้อ */}
+        <div className="mt-auto flex justify-between items-center pt-2">
+          <p className="text-xl font-bold text-zinc-900">
+            ฿{price.toLocaleString()}
+          </p>
           
+          {/* ปุ่มสั่งซื้อแบบ Text Link คลีนๆ */}
           <button 
             onClick={addToCart}
-            className="bg-blue-700 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg transition-colors font-semibold text-sm shadow-md active:scale-95"
+            className="text-[14px] font-semibold text-zinc-600 hover:text-red-600 flex items-center gap-1 transition-colors"
           >
-            สั่งซื้อ
+            สั่งซื้อ <span className="text-lg leading-none mt-[-2px]">›</span>
           </button>
         </div>
       </div>

@@ -1,156 +1,147 @@
 import Link from 'next/link';
+import ProductCard from '../components/ProductCard';
 
-export default function Home() {
+// ข้อมูลจำลองสำหรับสินค้าแนะนำ (ดึงมาจากไฟล์รูปภาพในโฟลเดอร์ public)
+const featuredProducts = [
+  { id: '1', name: 'Jinko Solar Tiger Pro 550W', category: 'บ้านพักอาศัย', price: 4500, capacity: '550W', imageUrl: '/Jiinko_550w.jpg' },
+  { id: '3', name: 'Huawei SUN2000-5KTL', category: 'อินเวอร์เตอร์', price: 28500, capacity: '5kW', imageUrl: '/OIP(1).jpg' },
+  { id: '6', name: 'แบตเตอรี่ลิเธียม Huawei LUNA2000', category: 'ระบบกักเก็บพลังงาน', price: 95000, capacity: '5kWh', imageUrl: '/OIP(3).jpg' },
+];
+
+export default function HomePage() {
   return (
-    <div className="w-full">
+    <div className="bg-white min-h-screen flex flex-col">
       
-      {/* 1. Hero Section (ภาพโฆษณาหลัก) */}
-      <section className="relative py-32 md:py-48 overflow-hidden">
-        {/* ภาพพื้นหลัง (อ้างอิงจากรูป hero-bg.jpg ในโฟลเดอร์ public) */}
-        <div 
-          className="absolute inset-0 z-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/bg.png')" }}
-        ></div>
-        {/* ฟิลเตอร์สีเข้ม (Overlay) */}
-        <div className="absolute inset-0 z-0 bg-slate-900/70 backdrop-blur-[2px]"></div>
+      {/* =========================================
+          1. Hero Banner (ส่วนดึงดูดสายตาแรก)
+      ========================================= */}
+      {/* 🖼️ แก้ไข 1: ใส่ bg-cover, bg-center และ style backgroundImage */}
+      <section 
+        className="relative pt-24 pb-32 overflow-hidden border-b border-zinc-200 bg-cover bg-center"
+        style={{ backgroundImage: "url('/bg.png')" }} // 👈 ใส่ชื่อไฟล์รูปของคุณตรงนี้ (เช่น /bg.png หรือ /hero.jpg)
+      >
+        {/* 🪄 แก้ไข 2: เพิ่มเลเยอร์สีขาวไล่ระดับ (Gradient) จากซ้ายไปขวา เพื่อให้ตัวหนังสืออ่านง่าย */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-transparent z-0"></div>
 
+        {/* เนื้อหาด้านในเหมือนเดิม (เพิ่ม relative z-10 ให้อยู่เหนือรูป) */}
         <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
-            <div className="inline-block bg-white/10 backdrop-blur-md text-white font-medium px-5 py-2 rounded-full text-sm mb-4 border border-white/20 shadow-lg">
-              🌱 แพลตฟอร์มจัดจำหน่ายโซล่าเซลล์ B2B & B2C
-            </div>
-            <h1 className="text-5xl md:text-6xl md:leading-[1.2] font-bold text-white">
-              ยกระดับธุรกิจด้วย <br className="hidden md:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">พลังงานสะอาดที่ยั่งยืน</span>
+          <div className="max-w-3xl">
+            <h2 className="text-red-600 font-semibold tracking-widest uppercase mb-4 text-sm">
+              Future of Energy
+            </h2>
+            <h1 className="text-5xl md:text-6xl font-extrabold text-zinc-900 leading-tight mb-6 tracking-tight">
+              พลังงานอัจฉริยะ <br />
+              เพื่อชีวิตที่ยั่งยืน
             </h1>
-            <p className="text-xl text-slate-300 leading-relaxed max-w-2xl mx-auto">
-              ศูนย์รวมแผงโซล่าเซลล์ อินเวอร์เตอร์ และอุปกรณ์ติดตั้งคุณภาพระดับโลก
-              พร้อมระบบจัดการคำสั่งซื้อและขอใบเสนอราคาสำหรับผู้รับเหมาและลูกค้าทั่วไป
+            <p className="text-lg text-zinc-600 mb-10 max-w-xl leading-relaxed">
+              สัมผัสประสบการณ์เทคโนโลยีโซล่าเซลล์ระดับโลก ที่ออกแบบมาเพื่อเพิ่มประสิทธิภาพ ลดต้นทุน และยกระดับการใช้ชีวิตของคุณ
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
-              <Link href="/products" className="inline-block text-center bg-blue-600 hover:bg-blue-500 text-white font-medium py-4 px-10 rounded-xl shadow-lg shadow-blue-600/40 transition-all hover:-translate-y-1">
-                ดูรายการสินค้า
+            
+            <div className="flex flex-wrap gap-4">
+              <Link 
+                href="/products" 
+                className="bg-red-600 hover:bg-red-700 text-white px-8 py-3.5 rounded-sm font-semibold transition-colors flex items-center gap-2"
+              >
+                ดูแคตตาล็อกสินค้า <span className="text-lg leading-none mt-[-2px]">›</span>
               </Link>
-              <Link href="/calculator" className="inline-block text-center bg-white/10 border border-white/30 hover:bg-white hover:text-slate-900 text-white font-medium py-4 px-10 rounded-xl transition-all shadow-sm hover:-translate-y-1">
+              <Link 
+                href="/calculator" 
+                className="bg-white/80 backdrop-blur-sm border border-zinc-300 hover:border-zinc-400 hover:bg-white text-zinc-800 px-8 py-3.5 rounded-sm font-semibold transition-all"
+              >
                 ประเมินความคุ้มค่า
               </Link>
             </div>
           </div>
         </div>
+        {/* รูปแบบตกแต่งพื้นหลังคลีนๆ (แทนรูปภาพ) */}
+        <div className="absolute right-0 top-0 w-1/2 h-full opacity-5 pointer-events-none">
+           <svg viewBox="0 0 100 100" className="w-full h-full text-zinc-900 fill-current" preserveAspectRatio="none">
+              <polygon points="0,100 100,0 100,100" />
+           </svg>
+        </div>
       </section>
 
-      {/* 2. สถิติความสำเร็จ (Trust Numbers) */}
-      <section className="bg-blue-600 py-12">
+      {/* =========================================
+          2. Value Proposition (จุดเด่นของแบรนด์)
+      ========================================= */}
+      <section className="py-16 bg-white border-b border-zinc-100">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-blue-500/50">
-            <div>
-              <p className="text-4xl font-bold text-white mb-2">1,000+</p>
-              <p className="text-blue-200 text-sm">รายการสินค้าพร้อมส่ง</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 divide-y md:divide-y-0 md:divide-x divide-zinc-100">
+            <div className="md:pr-10 pt-6 md:pt-0">
+              <h3 className="text-zinc-900 font-bold text-lg mb-2">เทคโนโลยีล้ำสมัย</h3>
+              <p className="text-zinc-500 text-sm leading-relaxed">อินเวอร์เตอร์และระบบกักเก็บพลังงานที่มาพร้อม AI อัจฉริยะ เพื่อประสิทธิภาพสูงสุด</p>
             </div>
-            <div>
-              <p className="text-4xl font-bold text-white mb-2">25 <span className="text-2xl">ปี</span></p>
-              <p className="text-blue-200 text-sm">รับประกันประสิทธิภาพแผง</p>
+            <div className="md:px-10 pt-6 md:pt-0">
+              <h3 className="text-zinc-900 font-bold text-lg mb-2">รับประกันคุณภาพ</h3>
+              <p className="text-zinc-500 text-sm leading-relaxed">สินค้าทุกชิ้นผ่านการทดสอบมาตรฐานระดับสากล พร้อมการรับประกันยาวนานสูงสุด 25 ปี</p>
             </div>
-            <div>
-              <p className="text-4xl font-bold text-white mb-2">10M+</p>
-              <p className="text-blue-200 text-sm">ช่วยลูกค้าประหยัดค่าไฟ (บาท/ปี)</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold text-white mb-2">24/7</p>
-              <p className="text-blue-200 text-sm">ระบบขอใบเสนอราคาออนไลน์</p>
+            <div className="md:pl-10 pt-6 md:pt-0">
+              <h3 className="text-zinc-900 font-bold text-lg mb-2">บริการครบวงจร</h3>
+              <p className="text-zinc-500 text-sm leading-relaxed">ตั้งแต่การให้คำปรึกษา จัดจำหน่าย ไปจนถึงแนะนำทีมวิศวกรผู้เชี่ยวชาญระดับประเทศ</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. แบรนด์พาร์ทเนอร์ (Global Partners) */}
-      <section className="py-16 bg-white border-b border-slate-100">
-        <div className="container mx-auto px-6 text-center">
-          <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-8">พันธมิตรระดับโลกของเรา</p>
-          <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-            {/* จำลองโลโก้ด้วย Text ไปก่อน (ถ้ามีไฟล์รูปโลโก้ค่อยมาเปลี่ยนเป็นแท็ก img ทีหลังได้ครับ) */}
-            <div className="text-2xl font-black font-sans">HUAWEI</div>
-            <div className="text-2xl font-black font-serif italic">JinkoSolar</div>
-            <div className="text-2xl font-black font-sans tracking-tighter">LONGi</div>
-            <div className="text-2xl font-bold font-mono">GROWATT</div>
-            <div className="text-2xl font-bold font-sans text-red-600">SMA</div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. ขอบเขตการทำงานของระบบ (System Scope) สำหรับโชว์อาจารย์ */}
-      <section className="py-24 bg-slate-50">
+      {/* =========================================
+          3. Featured Products (สินค้าแนะนำ)
+      ========================================= */}
+      <section className="py-24 bg-white">
         <div className="container mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-              ขอบเขตการทำงานของระบบ <span className="text-blue-600">SolarTech</span>
-            </h2>
-            <p className="text-slate-600 text-lg">
-              แพลตฟอร์มของเราถูกพัฒนาขึ้นเพื่อรองรับการทำงานแบบครบวงจร ตั้งแต่การเลือกซื้อไปจนถึงการจัดการหลังบ้าน
-            </p>
+          <div className="flex justify-between items-end mb-12 border-b border-zinc-200 pb-4">
+            <h2 className="text-3xl font-bold text-zinc-900 tracking-tight">ผลิตภัณฑ์ยอดนิยม</h2>
+            <Link href="/products" className="text-red-600 hover:text-red-700 font-medium flex items-center gap-1 transition-colors text-sm">
+              ดูสินค้าทั้งหมด <span className="text-lg leading-none mt-[-2px]">›</span>
+            </Link>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            
-            {/* Frontend Card */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-2xl">🖥️</div>
-                <h3 className="text-xl font-bold text-slate-800">ระบบหน้าบ้าน (Frontend)</h3>
-              </div>
-              <ul className="space-y-3 text-slate-600">
-                <li className="flex items-start gap-3"><span className="text-blue-500">✓</span><span>ระบบเข้าชมและค้นหาแผงโซล่าเซลล์ตามหมวดหมู่</span></li>
-                <li className="flex items-start gap-3"><span className="text-blue-500">✓</span><span>ระบบคำนวณขนาดแผงเบื้องต้น สำหรับผู้ใช้งาน (Solar Calculator)</span></li>
-                <li className="flex items-start gap-3"><span className="text-blue-500">✓</span><span>ระบบจัดการตะกร้าสินค้า (Shopping Cart)</span></li>
-              </ul>
-            </div>
-
-            {/* Payment Card */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-2xl">💳</div>
-                <h3 className="text-xl font-bold text-slate-800">ระบบชำระเงิน (Payment)</h3>
-              </div>
-              <ul className="space-y-3 text-slate-600">
-                <li className="flex items-start gap-3"><span className="text-emerald-500">✓</span><span>รองรับการชำระเงินผ่านการตัดบัตรเครดิต</span></li>
-                <li className="flex items-start gap-3"><span className="text-emerald-500">✓</span><span>รองรับการสแกน QR Code (PromptPay)</span></li>
-                <li className="flex items-start gap-3"><span className="text-emerald-500">✓</span><span>ระบบแนบหลักฐานและตรวจสอบสลิปการโอนเงิน</span></li>
-              </ul>
-            </div>
-
-            {/* Tracking Card */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-2xl">🚚</div>
-                <h3 className="text-xl font-bold text-slate-800">ระบบติดตามผล (Order Tracking)</h3>
-              </div>
-              <p className="text-slate-600 mb-5">อัปเดตและแจ้งเตือนสถานะการสั่งซื้อแบบเรียลไทม์:</p>
-              <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm">
-                <div className="flex flex-col items-center text-slate-400"><div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center mb-2">1</div><span>รอชำระ</span></div>
-                <div className="h-0.5 w-full bg-slate-200 mx-2"></div>
-                <div className="flex flex-col items-center text-amber-600 font-medium"><div className="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center mb-2 shadow-sm shadow-amber-200">2</div><span>ตรวจสอบ</span></div>
-                <div className="h-0.5 w-full bg-slate-200 mx-2"></div>
-                <div className="flex flex-col items-center text-slate-400"><div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center mb-2">3</div><span>จัดส่ง</span></div>
-              </div>
-            </div>
-
-            {/* Backend Card */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-2xl">⚙️</div>
-                <h3 className="text-xl font-bold text-slate-800">ระบบหลังบ้าน (Backend)</h3>
-              </div>
-              <ul className="space-y-3 text-slate-600">
-                <li className="flex items-start gap-3"><span className="text-purple-500">✓</span><span>ระบบจัดการสต็อกสินค้า (Stock Management)</span></li>
-                <li className="flex items-start gap-3"><span className="text-purple-500">✓</span><span>ระบบจัดเก็บประวัติการสั่งซื้อของลูกค้า</span></li>
-                <li className="flex items-start gap-3"><span className="text-purple-500">✓</span><span>แดชบอร์ดสรุปยอดขายและการจัดการสำหรับ Admin</span></li>
-              </ul>
-            </div>
-
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-14">
+            {featuredProducts.map(product => (
+              <ProductCard key={product.id} {...product} />
+            ))}
           </div>
         </div>
       </section>
-      
+
+      {/* =========================================
+          4. Solutions (โซลูชันแบ่งตามประเภท)
+      ========================================= */}
+      <section className="py-20 bg-zinc-50">
+        <div className="container mx-auto px-6">
+          <h2 className="text-2xl font-bold text-zinc-900 mb-10 text-center tracking-tight">โซลูชันที่ตอบโจทย์ทุกระดับ</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* โซลูชันบ้านพักอาศัย */}
+            <div className="group relative bg-white p-10 h-80 flex flex-col justify-end overflow-hidden border border-zinc-200 cursor-pointer">
+              <div className="absolute inset-0 bg-zinc-900/5 group-hover:bg-zinc-900/0 transition-colors duration-500 z-10"></div>
+              <div className="relative z-20">
+                <h3 className="text-2xl font-bold text-zinc-900 mb-2 group-hover:text-red-600 transition-colors">
+                  บ้านพักอาศัย (Residential)
+                </h3>
+                <p className="text-zinc-500 mb-4">ระบบโซล่าเซลล์สำหรับบ้านที่ชาญฉลาดและปลอดภัย</p>
+                <span className="text-sm font-bold text-zinc-900 group-hover:text-red-600 flex items-center gap-1">
+                  เรียนรู้เพิ่มเติม <span className="text-lg leading-none mt-[-2px]">›</span>
+                </span>
+              </div>
+            </div>
+
+            {/* โซลูชันอุตสาหกรรม */}
+            <div className="group relative bg-white p-10 h-80 flex flex-col justify-end overflow-hidden border border-zinc-200 cursor-pointer">
+              <div className="absolute inset-0 bg-zinc-900/5 group-hover:bg-zinc-900/0 transition-colors duration-500 z-10"></div>
+              <div className="relative z-20">
+                <h3 className="text-2xl font-bold text-zinc-900 mb-2 group-hover:text-red-600 transition-colors">
+                  ธุรกิจและอุตสาหกรรม (C&I)
+                </h3>
+                <p className="text-zinc-500 mb-4">ปลดล็อกศักยภาพทางธุรกิจด้วยพลังงานสะอาดที่ยั่งยืน</p>
+                <span className="text-sm font-bold text-zinc-900 group-hover:text-red-600 flex items-center gap-1">
+                  เรียนรู้เพิ่มเติม <span className="text-lg leading-none mt-[-2px]">›</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
-  )
+  );
 }

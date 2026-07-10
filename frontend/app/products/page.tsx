@@ -1,91 +1,106 @@
-'use client'; // บังคับให้หน้านี้ทำงานฝั่ง Client เพื่อให้ระบบค้นหาพิมพ์ปุ๊บเปลี่ยนปั๊บได้
+'use client'; 
 
 import { useState } from 'react';
 import ProductCard from '../../components/ProductCard';
 
-// 1. จำลองฐานข้อมูลสินค้า (Mock Data)
-// ⚠️ แก้ไข imageUrl ให้ตรงกับชื่อไฟล์รูปที่คุณใส่ไว้ในโฟลเดอร์ public
 const mockProducts = [
-  { id: '1', name: 'Jinko Solar Tiger Pro 550W', category: 'แผงโซล่าเซลล์', price: 4500, capacity: '550W', imageUrl: '/Jiinko_550w.jpg' },
-  { id: '2', name: 'Longi Hi-MO 5 540W', category: 'แผงโซล่าเซลล์', price: 4200, capacity: '540W', imageUrl: '/OIP.jpg' },
-  { id: '3', name: 'Huawei SUN2000-5KTL', category: 'อินเวอร์เตอร์', price: 28500, capacity: '5kW', imageUrl: '/OIP(1).jpg' },
-  { id: '4', name: 'Growatt MIN 3000TL-X', category: 'อินเวอร์เตอร์', price: 15900, capacity: '3kW', imageUrl: '/OIP(1).jpg' },
+  { id: '1', name: 'Jinko Solar Tiger Pro 550W', category: 'บ้านพักอาศัย (Residential)', price: 4500, capacity: '550W', imageUrl: '/Jiinko_550w.jpg' },
+  { id: '2', name: 'Longi Hi-MO 5 540W', category: 'บ้านพักอาศัย (Residential)', price: 4200, capacity: '540W', imageUrl: '/Jiinko_550w.jpg' },
+  { id: '3', name: 'Huawei SUN2000-5KTL', category: 'ภาคพาณิชย์และอุตสาหกรรม', price: 28500, capacity: '5kW', imageUrl: '/OIP(1).jpg' },
+  { id: '4', name: 'Growatt MIN 3000TL-X', category: 'บ้านพักอาศัย (Residential)', price: 15900, capacity: '3kW', imageUrl: '/OIP(1).jpg' },
   { id: '5', name: 'รางอลูมิเนียม Mounting Rail 4.2m', category: 'อุปกรณ์ติดตั้ง', price: 650, capacity: '-', imageUrl: '/OIP(2).jpg' },
-  { id: '6', name: 'แบตเตอรี่ลิเธียม Huawei LUNA2000', category: 'แบตเตอรี่', price: 95000, capacity: '5kWh', imageUrl: '/OIP(3).jpg' }, // สมมติชื่อไฟล์ไปก่อน คุณสามารถแก้ให้ตรงกับไฟล์จริงได้เลยครับ
+  { id: '6', name: 'แบตเตอรี่ลิเธียม Huawei LUNA2000', category: 'ระบบกักเก็บพลังงาน', price: 95000, capacity: '5kWh', imageUrl: '/OIP(3).jpg' },
 ];
 
 export default function ProductsPage() {
-  // 2. สร้างตัวแปรเก็บสถานะการค้นหาและการกรอง
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
 
-  // 3. ฟังก์ชันกรองสินค้าตามเงื่อนไข
   const filteredProducts = mockProducts.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'ทั้งหมด' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['ทั้งหมด', 'แผงโซล่าเซลล์', 'อินเวอร์เตอร์', 'แบตเตอรี่', 'อุปกรณ์ติดตั้ง'];
+  // เปลี่ยนชื่อหมวดหมู่ให้คล้าย Huawei
+  const categories = [
+    'ทั้งหมด', 
+    'บ้านพักอาศัย (Residential)', 
+    'ภาคพาณิชย์และอุตสาหกรรม', 
+    'ระบบกักเก็บพลังงาน', 
+    'อุปกรณ์ติดตั้ง'
+  ];
 
   return (
-    <div className="container mx-auto px-6 py-12">
-      <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">แคตตาล็อกสินค้า</h1>
-          <p className="text-slate-600">ค้นหาและเลือกซื้ออุปกรณ์โซล่าเซลล์คุณภาพสูง</p>
-        </div>
+    <div className="bg-white min-h-screen">
+      {/* 🔴 แถบสีแดงตกแต่งด้านบนสุด (Optional) */}
+      <div className="w-full h-1 bg-red-600"></div>
+
+      <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row gap-12">
         
-        {/* แถบค้นหา (Search Bar) */}
-        <div className="w-full md:w-96 relative">
-          <input 
-            type="text" 
-            placeholder="ค้นหาชื่อสินค้า... (เช่น Huawei, Jinko)" 
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <div className="absolute left-3 top-3.5 text-slate-400">🔍</div>
-        </div>
-      </div>
+        {/* ⬅️ Sidebar ด้านซ้าย (หมวดหมู่) */}
+        <aside className="w-full md:w-64 shrink-0">
+          <h2 className="text-xl font-bold text-zinc-900 mb-6 border-b border-zinc-200 pb-4">
+            หมวดหมู่สินค้า
+          </h2>
+          <ul className="space-y-3">
+            {categories.map(category => (
+              <li key={category}>
+                <button
+                  onClick={() => setSelectedCategory(category)}
+                  className={`text-left w-full text-[15px] transition-colors py-1 ${
+                    selectedCategory === category 
+                      ? 'text-red-600 font-bold' 
+                      : 'text-zinc-500 hover:text-red-600'
+                  }`}
+                >
+                  {category}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
 
-      {/* แถบกรองหมวดหมู่ (Category Filter) */}
-      <div className="flex overflow-x-auto gap-2 mb-8 pb-2 custom-scrollbar">
-        {categories.map(category => (
-          <button
-            key={category}
-            onClick={() => setSelectedCategory(category)}
-            className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-medium transition-all ${
-              selectedCategory === category 
-                ? 'bg-blue-600 text-white shadow-md' 
-                : 'bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600'
-            }`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
+        {/* ➡️ Main Content ด้านขวา (ค้นหา + กริดสินค้า) */}
+        <main className="flex-1">
+          
+          {/* แถบค้นหาแบบคลีนๆ (ขีดเส้นใต้เส้นเดียว) */}
+          <div className="mb-10 relative">
+            <input 
+              type="text" 
+              placeholder="ค้นหาสินค้า... (เช่น Huawei, Jinko)" 
+              className="w-full md:w-1/2 px-0 py-3 border-b-2 border-zinc-200 focus:border-red-600 transition-all outline-none bg-transparent text-zinc-900 placeholder-zinc-400"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="absolute right-auto left-[calc(50%-2rem)] md:left-auto md:right-[50%] top-3 text-zinc-400">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+            </div>
+          </div>
 
-      {/* กริดแสดงสินค้า (Product Grid) */}
-      {filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map(product => (
-            <ProductCard key={product.id} {...product} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 bg-white rounded-2xl border border-slate-100 border-dashed">
-          <div className="text-4xl mb-4">🤷‍♂️</div>
-          <h3 className="text-xl font-bold text-slate-800 mb-2">ไม่พบสินค้าที่คุณค้นหา</h3>
-          <p className="text-slate-500">ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่ใหม่ดูนะครับ</p>
-          <button 
-            onClick={() => { setSearchTerm(''); setSelectedCategory('ทั้งหมด'); }}
-            className="mt-4 text-blue-600 font-medium hover:underline"
-          >
-            ล้างการค้นหาทั้งหมด
-          </button>
-        </div>
-      )}
+          {/* กริดแสดงสินค้า */}
+          {filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-14">
+              {filteredProducts.map(product => (
+                <ProductCard key={product.id} {...product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <p className="text-zinc-400 mb-2">ไม่พบสินค้าในหมวดหมู่นี้</p>
+              <button 
+                onClick={() => { setSearchTerm(''); setSelectedCategory('ทั้งหมด'); }}
+                className="text-red-600 font-medium hover:underline"
+              >
+                ล้างการค้นหา
+              </button>
+            </div>
+          )}
+        </main>
+
+      </div>
     </div>
   );
 }
