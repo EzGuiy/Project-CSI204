@@ -141,6 +141,7 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'qr'>('credit_card');
   const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [userId, setUserId] = useState<string>('');
 
   // Shipping form
   const [shipping, setShipping] = useState<ShippingInfo>({
@@ -176,6 +177,7 @@ export default function CheckoutPage() {
     // Pre-fill ชื่อจาก session
     const user = JSON.parse(session);
     setShipping(prev => ({ ...prev, fullName: user.name || '' }));
+    setUserId(user.id || '');
     setIsLoaded(true);
   }, [router]);
 
@@ -233,6 +235,7 @@ export default function CheckoutPage() {
       const orderId = generateOrderId();
       const order = {
         id: orderId,
+        userId: userId,
         date: new Date().toISOString(),
         items: cartItems,
         subtotal,
@@ -243,6 +246,16 @@ export default function CheckoutPage() {
         cardLast4: paymentMethod === 'credit_card' ? card.number.replace(/\s/g, '').slice(-4) : null,
         cardNetwork: paymentMethod === 'credit_card' ? cardNetwork : null,
         status: 'confirmed',
+        carrier: null,
+        trackingNumber: null,
+        statusHistory: [
+          {
+            status: 'confirmed',
+            label: 'ยืนยันคำสั่งซื้อแล้ว',
+            date: new Date().toISOString(),
+            note: 'ชำระเงินสำเร็จ ระบบกำลังจัดเตรียมสินค้าสำหรับจัดส่ง',
+          }
+        ],
       };
 
       // บันทึก Order
