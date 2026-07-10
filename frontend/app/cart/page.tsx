@@ -130,7 +130,15 @@ export default function CartPage() {
             <button 
               disabled={cartItems.length === 0}
               className="w-full bg-slate-900 hover:bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-colors shadow-md"
-              onClick={() => alert('ฟีเจอร์ชำระเงินจะมาในเร็วๆ นี้!')}
+              onClick={() => {
+                const session = localStorage.getItem('solar_session');
+                if (!session) {
+                  alert('❌ กรุณาล็อกอินก่อนทำการชำระเงิน');
+                  window.location.href = '/login';
+                  return;
+                }
+                window.location.href = '/checkout';
+              }}
             >
               ดำเนินการชำระเงิน
             </button>

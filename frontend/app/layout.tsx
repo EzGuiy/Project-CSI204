@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Mitr } from 'next/font/google'
 import './globals.css'
 import Navbar from '../components/Navbar' // 👈 นำเข้า Navbar ที่เราสร้างใหม่
+import ChatWidget from '../components/ChatWidget' // 💬 ระบบแชท (Coming Soon)
 
 const mitr = Mitr({ subsets: ['thai', 'latin'], weight: ['300', '400', '500', '600'] })
 
@@ -21,6 +22,7 @@ export default function RootLayout({
         
         {/* 🌟 เรียกใช้ Navbar ตรงนี้แค่บรรทัดเดียว! */}
         <Navbar />
+        <ChatWidget />
 
         <main className="flex-grow">
           {children}
