@@ -1,13 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation'; // 1. เพิ่ม useRouter เข้ามาเพื่อใช้เปลี่ยนหน้า
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter(); // 2. เรียกใช้งาน useRouter
 
   // ไม่แสดง Navbar ในหน้า Login และ Register
   if (pathname === '/login' || pathname === '/register') return null;
+
+  // 3. สร้างฟังก์ชันสำหรับจัดการการออกจากระบบ
+  const handleLogout = () => {
+    localStorage.removeItem('solar_session'); // ลบข้อมูลการล็อกอินออก
+    
+    // (เพิ่มเติม) ถ้าต้องการให้ล้างตะกร้าสินค้าตอนลบเซสชันด้วย สามารถเปิดใช้งานบรรทัดล่างนี้ได้ครับ
+    // localStorage.removeItem('solar_cart'); 
+    
+    alert('ออกจากระบบเรียบร้อยแล้ว');
+    router.push('/login'); // พากลับไปยังหน้าล็อกอิน
+  };
 
   return (
     <nav className="bg-[#0f172a] text-white border-b border-slate-800 sticky top-0 z-50 shadow-sm">
@@ -60,7 +72,11 @@ export default function Navbar() {
                 แดชบอร์ด
               </Link>
               
-              <button className="bg-red-600 text-white px-4 py-2 rounded-sm text-sm font-bold hover:bg-red-700 transition-colors">
+              {/* 4. ใส่ onClick={handleLogout} ให้กับปุ่มออกระบบ */}
+              <button 
+                onClick={handleLogout}
+                className="bg-red-600 text-white px-4 py-2 rounded-sm text-sm font-bold hover:bg-red-700 transition-colors"
+              >
                 ออกจากระบบ
               </button>
             </div>

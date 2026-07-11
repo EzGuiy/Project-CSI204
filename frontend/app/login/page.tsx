@@ -66,8 +66,14 @@ export default function LoginPage() {
         
         alert(`✅ เข้าสู่ระบบสำเร็จ!\nยินดีต้อนรับ: ${user.name}\nสิทธิ์การใช้งาน: ${user.role.toUpperCase()}`);
         
-        // ✨ อัปเดตโค้ดตรงนี้: บังคับโหลดหน้าเว็บใหม่ทั้งหมด เพื่อให้ Navbar อัปเดตสถานะทันที
-        window.location.href = '/'; 
+        // ⚡ เงื่อนไขในการ Redirect ไปยังหน้าต่าง ๆ ตาม Role
+        if (user.role === 'admin') {
+          // หากเป็น Admin ให้ส่งไปที่หน้าแอดมินแดชบอร์ดทันที
+          router.push('/admin/dashboard');
+        } else {
+          // หากเป็นสิทธิ์อื่น ๆ ให้กลับไปหน้าแรกและรีโหลดเพื่ออัปเดตสถานะ Navbar
+          window.location.href = '/'; 
+        }
       } else {
         setError('❌ อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
       }
