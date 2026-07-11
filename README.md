@@ -179,7 +179,15 @@
 * **หน้าจอระบบคำนวณโซล่าเซลล์ (Solar Calculator Dashboard):** ช่องกรอกข้อมูลค่าไฟและประมวลผลขนาดแผงที่เหมาะสม
 * **หน้าจัดการตะกร้าและระบบเอกสาร (Cart & Checkout):** ระบบกดส่งใบสั่งซื้อและดาวน์โหลดใบเสนอราคา (PDF)
 
-> 🔗 (https://www.figma.com/design/WeojkzaXgryaHPOBCMEakY/Untitled?node-id=0-1&t=KVBF0JjkDKIRFrnN-1)
+> <img width="1896" height="1233" alt="localhost_3000_cart" src="https://github.com/user-attachments/assets/864106de-84a6-4787-9d03-a9b25e8c3ac7" />
+<img width="1896" height="1983" alt="localhost_3000_calculator" src="https://github.com/user-attachments/assets/f4767ef3-6c1c-4dea-b3cb-d24ba0de1ba9" />
+<img width="1896" height="2091" alt="localhost_3000_products" src="https://github.com/user-attachments/assets/cb0cbd60-30ad-45c5-8147-dd785fd7c97f" />
+<img width="1896" height="3636" alt="localhost_3000_" src="https://github.com/user-attachments/assets/ec11f4df-c35a-4861-a22d-02c69187f679" />
+<img width="1896" height="1233" alt="localhost_3000_dashboard (2)" src="https://github.com/user-attachments/assets/e4f7fa60-feab-4686-8928-80aa93fb0cda" />
+<img width="1896" height="1233" alt="localhost_3000_dashboard (1)" src="https://github.com/user-attachments/assets/479a2084-71a7-467d-be71-9289d3b30c52" />
+<img width="1896" height="1233" alt="localhost_3000_dashboard" src="https://github.com/user-attachments/assets/6d5a47c0-535d-4e1b-af45-7269f29ab633" />
+<img width="1896" height="1259" alt="localhost_3000_orders" src="https://github.com/user-attachments/assets/d62e92cd-2765-4ac5-873a-4673e303aecd" />
+
 
 ---
 
