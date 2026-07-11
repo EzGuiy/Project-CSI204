@@ -172,12 +172,10 @@
 
 ## 15. Wireframe
 
-โครงสร้างหน้าจอจำลอง (Mockups) ของแพลตฟอร์ม SolarTech ที่ออกแบบร่วมกันบน Figma ในโทนสีน้ำเงิน-ขาว:
+<img width="477" height="232" alt="739419916_1583485776484454_5916675914200421984_n" src="https://github.com/user-attachments/assets/dd33c9ba-4740-48cd-8dcc-8190b8a4bfc9" />
+<img width="484" height="499" alt="743326761_27165085259839992_3010394111015873661_n" src="https://github.com/user-attachments/assets/cf694471-dbb3-42fc-8c1d-9b4cae30d852" />
+<img width="481" height="243" alt="739781744_2438097479990234_8108115699663750072_n" src="https://github.com/user-attachments/assets/694211f7-76c2-447f-acaf-e1aad65193f9" />
 
-### 📱 หน้าจอส่วนติดต่อผู้ใช้งานหลัก (Main User Interface)
-* **หน้าแรกและแคตตาล็อกสินค้า (Homepage & Catalog):** ค้นหาและคัดกรองสินค้าแผงโซล่าเซลล์และอินเวอร์เตอร์
-* **หน้าจอระบบคำนวณโซล่าเซลล์ (Solar Calculator Dashboard):** ช่องกรอกข้อมูลค่าไฟและประมวลผลขนาดแผงที่เหมาะสม
-* **หน้าจัดการตะกร้าและระบบเอกสาร (Cart & Checkout):** ระบบกดส่งใบสั่งซื้อและดาวน์โหลดใบเสนอราคา (PDF)
 
 > 
 
