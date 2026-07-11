@@ -2,149 +2,133 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const router = useRouter();
 
-  // 1. ดึงข้อมูลจาก LocalStorage ตอนเปิดหน้านี้
+  // โหลดข้อมูลตะกร้าจาก LocalStorage
   useEffect(() => {
-    const savedCart = JSON.parse(localStorage.getItem('solar_cart') || '[]');
-    setCartItems(savedCart);
+    const savedCart = localStorage.getItem('solar_cart');
+    if (savedCart) {
+      setCartItems(JSON.parse(savedCart));
+    }
     setIsLoaded(true);
   }, []);
 
-  // 2. ฟังก์ชันเซฟข้อมูลกลับลงเครื่อง (พร้อมอัปเดตตัวเลขสีแดง)
-  const saveCart = (newCart: any[]) => {
-    setCartItems(newCart);
-    localStorage.setItem('solar_cart', JSON.stringify(newCart));
-    window.dispatchEvent(new Event('cartUpdated')); 
-  };
-
-  // 3. ฟังก์ชันเพิ่ม/ลดจำนวน
-  const updateQuantity = (id: string, delta: number) => {
-    const newCart = cartItems.map(item => {
-      if (item.id === id) {
-        return { ...item, quantity: Math.max(1, item.quantity + delta) };
-      }
-      return item;
-    });
-    saveCart(newCart);
-  };
-
-  // 4. ฟังก์ชันลบสินค้า
+  // ฟังก์ชันลบสินค้า
   const removeItem = (id: string) => {
-    const newCart = cartItems.filter(item => item.id !== id);
-    saveCart(newCart);
+    const updatedCart = cartItems.filter(item => item.id !== id);
+    setCartItems(updatedCart);
+    localStorage.setItem('solar_cart', JSON.stringify(updatedCart));
+    window.dispatchEvent(new Event('cartUpdated')); // อัปเดตตัวเลขบนไอคอนตะกร้า
   };
 
-  // 5. คำนวณยอดเงิน
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shippingFee = (subtotal > 50000 || subtotal === 0) ? 0 : 1500; // โปรส่งฟรีเมื่อซื้อเกิน 5 หมื่น
-  const total = subtotal + shippingFee;
+  // ฟังก์ชันคำนวณยอดรวม
+  const calculateTotal = () => {
+    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
 
-  // ป้องกันหน้าจอกระพริบตอนโหลด
-  if (!isLoaded) return <div className="py-20 text-center text-slate-500">กำลังโหลดตะกร้าสินค้า...</div>;
+  // ไปยังหน้า Checkout
+  const handleCheckout = () => {
+    if (cartItems.length === 0) {
+        alert('กรุณาเลือกสินค้าก่อนทำการสั่งซื้อครับ');
+        return;
+    }
+    router.push('/checkout');
+  };
+
+  if (!isLoaded) return <div className="min-h-screen bg-zinc-50 flex items-center justify-center">กำลังโหลด...</div>;
 
   return (
-    <div className="container mx-auto px-6 py-12">
-      <h1 className="text-3xl font-bold text-slate-900 mb-8 flex items-center gap-3">
-        <span className="text-4xl">🛒</span> ตะกร้าสินค้าของคุณ
-      </h1>
+    <div className="min-h-screen bg-zinc-50 py-12">
+      <div className="container mx-auto px-4 max-w-4xl">
+        <h1 className="text-3xl font-bold text-zinc-900 mb-8">ตะกร้าสินค้า</h1>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        
-        {/* ฝั่งซ้าย: รายการสินค้า */}
-        <div className="lg:w-2/3 space-y-4">
-          {cartItems.length > 0 ? (
-            cartItems.map(item => (
-              <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-6 relative">
+        {cartItems.length === 0 ? (
+          // กรณีตะกร้าว่าง
+          <div className="bg-white p-12 text-center rounded-sm border border-zinc-200 shadow-sm">
+            <div className="text-6xl mb-4 text-zinc-300">🛒</div>
+            <p className="text-zinc-500 mb-6">ไม่มีสินค้าในตะกร้าของคุณ</p>
+            <Link href="/products" className="inline-block bg-zinc-900 text-white px-6 py-3 rounded-sm font-medium hover:bg-zinc-800 transition-colors">
+              กลับไปเลือกซื้อสินค้า
+            </Link>
+          </div>
+        ) : (
+          // กรณีมีสินค้า
+          <div className="grid md:grid-cols-3 gap-8">
+            
+            {/* รายการสินค้า (ฝั่งซ้าย) */}
+            <div className="md:col-span-2 space-y-4">
+              {cartItems.map((item) => (
+                <div key={item.id} className="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm flex items-center gap-6">
+                  {/* รูปสินค้า */}
+                  <div className="w-24 h-24 bg-zinc-100 flex-shrink-0 flex items-center justify-center rounded-sm overflow-hidden p-2">
+                    <img 
+                      src={item.icon} // ใช้ item.icon เพราะเราเซฟ imageUrl ไว้ในคีย์ชื่อ icon ตอน Add to Cart
+                      alt={item.name}
+                      className="w-full h-full object-contain mix-blend-multiply"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/file.svg'; // รูปสำรองเผื่อหารูปไม่เจอ
+                      }}
+                    />
+                  </div>
+
+                  {/* ข้อมูลสินค้า */}
+                  <div className="flex-grow">
+                    <h3 className="text-lg font-bold text-zinc-900 mb-1">{item.name}</h3>
+                    <p className="text-zinc-500 mb-2">ราคา: ฿{item.price.toLocaleString()}</p>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-medium text-zinc-700 bg-zinc-100 px-3 py-1 rounded-sm">
+                        จำนวน: {item.quantity}
+                      </span>
+                      <button 
+                        onClick={() => removeItem(item.id)}
+                        className="text-red-500 text-sm hover:underline"
+                      >
+                        ลบออก
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* ราคารวมของสินค้านั้น */}
+                  <div className="text-right">
+                    <p className="font-bold text-lg text-zinc-900">
+                      ฿{(item.price * item.quantity).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* สรุปยอดและปุ่มจ่ายเงิน (ฝั่งขวา) */}
+            <div className="md:col-span-1">
+              <div className="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm sticky top-24">
+                <h2 className="text-xl font-bold text-zinc-900 mb-6 pb-4 border-b border-zinc-100">สรุปคำสั่งซื้อ</h2>
                 
-                <div className="w-24 h-24 bg-white border border-slate-200 flex items-center justify-center rounded-xl p-2 shrink-0">
-    <img 
-    src={item.icon} 
-    alt={item.name}
-    className="w-full h-full object-contain drop-shadow-sm"
-  />
-</div>
-
-                <div className="flex-grow text-center sm:text-left">
-                  <h3 className="font-bold text-slate-800 text-lg mb-1">{item.name}</h3>
-                  <p className="text-blue-600 font-medium">฿{item.price.toLocaleString()} / ชิ้น</p>
+                <div className="flex justify-between mb-4 text-zinc-600">
+                  <span>ยอดรวม ({cartItems.length} รายการ)</span>
+                  <span>฿{calculateTotal().toLocaleString()}</span>
+                </div>
+                
+                <div className="flex justify-between font-bold text-xl text-zinc-900 mt-6 pt-6 border-t border-zinc-100">
+                  <span>ยอดสุทธิ</span>
+                  <span>฿{calculateTotal().toLocaleString()}</span>
                 </div>
 
-                <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
-                  <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm hover:bg-slate-100 font-bold text-slate-600">-</button>
-                  <span className="w-8 text-center font-bold text-slate-800">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm hover:bg-slate-100 font-bold text-slate-600">+</button>
-                </div>
-
-                <div className="w-24 text-right font-bold text-lg text-slate-800">
-                  ฿{(item.price * item.quantity).toLocaleString()}
-                </div>
-
-                <button onClick={() => removeItem(item.id)} className="absolute -top-3 -right-3 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-sm">
-                  ✕
+                <button 
+                  onClick={handleCheckout}
+                  className="w-full mt-8 bg-red-600 text-white py-4 rounded-sm font-bold text-lg hover:bg-red-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+                >
+                  ดำเนินการสั่งซื้อ <span>›</span>
                 </button>
               </div>
-            ))
-          ) : (
-            <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center">
-              <p className="text-5xl mb-4">🪹</p>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">ไม่มีสินค้าในตะกร้า</h3>
-              <p className="text-slate-500 mb-6">กลับไปเลือกซื้อแผงโซล่าเซลล์และอุปกรณ์กันเถอะ</p>
-              <Link href="/products" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                ไปที่รายการสินค้า
-              </Link>
-            </div>
-          )}  
-        </div>
-
-        {/* ฝั่งขวา: สรุปยอดสั่งซื้อ */}
-        <div className="lg:w-1/3">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm sticky top-24">
-            <h2 className="text-xl font-bold text-slate-800 mb-6 pb-4 border-b border-slate-100">สรุปคำสั่งซื้อ</h2>
-            
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between text-slate-600">
-                <span>ยอดรวมสินค้า</span>
-                <span className="font-medium text-slate-800">฿{subtotal.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>ค่าจัดส่ง</span>
-                {shippingFee === 0 ? (
-                  <span className="font-medium text-emerald-500">ฟรี (โปรโมชั่น)</span>
-                ) : (
-                  <span className="font-medium text-slate-800">฿{shippingFee.toLocaleString()}</span>
-                )}
-              </div>
             </div>
 
-            <div className="border-t border-slate-100 pt-4 mb-8">
-              <div className="flex justify-between items-end">
-                <span className="font-bold text-slate-800">ยอดชำระสุทธิ</span>
-                <span className="text-3xl font-bold text-blue-600">฿{total.toLocaleString()}</span>
-              </div>
-            </div>
-
-            <button 
-              disabled={cartItems.length === 0}
-              className="w-full bg-slate-900 hover:bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-colors shadow-md"
-              onClick={() => {
-                const session = localStorage.getItem('solar_session');
-                if (!session) {
-                  alert('❌ กรุณาล็อกอินก่อนทำการชำระเงิน');
-                  window.location.href = '/login';
-                  return;
-                }
-                window.location.href = '/checkout';
-              }}
-            >
-              ดำเนินการชำระเงิน
-            </button>
           </div>
-        </div>
-
+        )}
       </div>
     </div>
   );
