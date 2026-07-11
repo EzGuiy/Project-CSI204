@@ -1,0 +1,32 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "username": "admin",
+      "password": "password123",
+      "role": "employee",
+      "name": "วิศวกร สมศักดิ์"
+    }
+  ],
+  "products": [
+    {
+      "id": "p1",
+      "name": "Jinko Solar Tiger Pro 550W",
+      "category": "บ้านพักอาศัย",
+      "price": 4500,
+      "stock": 15,
+      "image": "/Jiinko_550w.jpg"
+    },
+    {
+      "id": "p2",
+      "name": "Huawei SUN2000-5KTL",
+      "category": "อินเวอร์เตอร์",
+      "price": 28500,
+      "stock": 5,   
+      "image": "/file.svg"
+    }
+    
+  ],
+  "orders": [],
+  "chats": []
+}

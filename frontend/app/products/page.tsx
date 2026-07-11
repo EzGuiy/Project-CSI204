@@ -1,105 +1,105 @@
-'use client'; 
+'use client';
 
-import { useState } from 'react';
-import ProductCard from '../../components/ProductCard';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
-const mockProducts = [
-  { id: '1', name: 'Jinko Solar Tiger Pro 550W', category: 'บ้านพักอาศัย (Residential)', price: 4500, capacity: '550W', imageUrl: '/Jiinko_550w.jpg' },
-  { id: '2', name: 'Longi Hi-MO 5 540W', category: 'บ้านพักอาศัย (Residential)', price: 4200, capacity: '540W', imageUrl: '/Jiinko_550w.jpg' },
-  { id: '3', name: 'Huawei SUN2000-5KTL', category: 'ภาคพาณิชย์และอุตสาหกรรม', price: 28500, capacity: '5kW', imageUrl: '/OIP(1).jpg' },
-  { id: '4', name: 'Growatt MIN 3000TL-X', category: 'บ้านพักอาศัย (Residential)', price: 15900, capacity: '3kW', imageUrl: '/OIP(1).jpg' },
-  { id: '5', name: 'รางอลูมิเนียม Mounting Rail 4.2m', category: 'อุปกรณ์ติดตั้ง', price: 650, capacity: '-', imageUrl: '/OIP(2).jpg' },
-  { id: '6', name: 'แบตเตอรี่ลิเธียม Huawei LUNA2000', category: 'ระบบกักเก็บพลังงาน', price: 95000, capacity: '5kWh', imageUrl: '/OIP(3).jpg' },
-];
+// กำหนดโครงสร้างข้อมูลสินค้า (Type)
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  stock: number;
+  image: string;
+}
 
 export default function ProductsPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
+  // สร้าง State สำหรับเก็บข้อมูลสินค้า และสถานะการโหลด
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredProducts = mockProducts.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'ทั้งหมด' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // ดึงข้อมูลจาก API ทันทีที่เปิดหน้านี้
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/products');
+        if (!response.ok) throw new Error('Failed to fetch');
+        
+        const data = await response.json();
+        setProducts(data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // เปลี่ยนชื่อหมวดหมู่ให้คล้าย Huawei
-  const categories = [
-    'ทั้งหมด', 
-    'บ้านพักอาศัย (Residential)', 
-    'ภาคพาณิชย์และอุตสาหกรรม', 
-    'ระบบกักเก็บพลังงาน', 
-    'อุปกรณ์ติดตั้ง'
-  ];
+    fetchProducts();
+  }, []);
 
   return (
-    <div className="bg-white min-h-screen">
-      {/* 🔴 แถบสีแดงตกแต่งด้านบนสุด (Optional) */}
-      <div className="w-full h-1 bg-red-600"></div>
-
-      <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row gap-12">
-        
-        {/* ⬅️ Sidebar ด้านซ้าย (หมวดหมู่) */}
-        <aside className="w-full md:w-64 shrink-0">
-          <h2 className="text-xl font-bold text-zinc-900 mb-6 border-b border-zinc-200 pb-4">
-            หมวดหมู่สินค้า
-          </h2>
-          <ul className="space-y-3">
-            {categories.map(category => (
-              <li key={category}>
-                <button
-                  onClick={() => setSelectedCategory(category)}
-                  className={`text-left w-full text-[15px] transition-colors py-1 ${
-                    selectedCategory === category 
-                      ? 'text-red-600 font-bold' 
-                      : 'text-zinc-500 hover:text-red-600'
-                  }`}
-                >
-                  {category}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </aside>
-
-        {/* ➡️ Main Content ด้านขวา (ค้นหา + กริดสินค้า) */}
-        <main className="flex-1">
-          
-          {/* แถบค้นหาแบบคลีนๆ (ขีดเส้นใต้เส้นเดียว) */}
-          <div className="mb-10 relative">
-            <input 
-              type="text" 
-              placeholder="ค้นหาสินค้า... (เช่น Huawei, Jinko)" 
-              className="w-full md:w-1/2 px-0 py-3 border-b-2 border-zinc-200 focus:border-red-600 transition-all outline-none bg-transparent text-zinc-900 placeholder-zinc-400"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <div className="absolute right-auto left-[calc(50%-2rem)] md:left-auto md:right-[50%] top-3 text-zinc-400">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-              </svg>
-            </div>
+    <div className="min-h-screen bg-zinc-50 py-12">
+      <div className="container mx-auto px-4 max-w-6xl">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4 border-b border-zinc-200 pb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-zinc-900 mb-2">แคตตาล็อกสินค้า</h1>
+            <p className="text-zinc-500">อุปกรณ์โซล่าเซลล์คุณภาพสูง พร้อมรับประกัน</p>
           </div>
+        </div>
 
-          {/* กริดแสดงสินค้า */}
-          {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-14">
-              {filteredProducts.map(product => (
-                <ProductCard key={product.id} {...product} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-20">
-              <p className="text-zinc-400 mb-2">ไม่พบสินค้าในหมวดหมู่นี้</p>
-              <button 
-                onClick={() => { setSearchTerm(''); setSelectedCategory('ทั้งหมด'); }}
-                className="text-red-600 font-medium hover:underline"
-              >
-                ล้างการค้นหา
-              </button>
-            </div>
-          )}
-        </main>
+        {/* ตรวจสอบสถานะการโหลด */}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64 text-zinc-500">
+            กำลังโหลดข้อมูลสินค้า...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <div key={product.id} className="bg-white rounded-sm border border-zinc-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
+                {/* รูปภาพสินค้า */}
+                <div className="aspect-square bg-zinc-100 p-6 flex items-center justify-center relative">
+                  <img 
+                    src={product.image} 
+                    alt={product.name}
+                    className="w-full h-full object-contain mix-blend-multiply"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/file.svg'; // รูปสำรอง
+                    }}
+                  />
+                  {product.stock <= 5 && product.stock > 0 && (
+                    <span className="absolute top-2 right-2 bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded-sm">
+                      ใกล้หมด
+                    </span>
+                  )}
+                  {product.stock === 0 && (
+                    <span className="absolute top-2 right-2 bg-zinc-800 text-white text-xs font-bold px-2 py-1 rounded-sm">
+                      สินค้าหมด
+                    </span>
+                  )}
+                </div>
 
+                {/* รายละเอียดสินค้า */}
+                <div className="p-5">
+                  <span className="text-xs font-medium text-zinc-400 mb-2 block">{product.category}</span>
+                  <h3 className="font-bold text-zinc-900 mb-2 line-clamp-2 group-hover:text-red-600 transition-colors">
+                    {product.name}
+                  </h3>
+                  <div className="flex justify-between items-center mt-4">
+                    <span className="font-bold text-lg text-zinc-900">
+                      ฿{product.price.toLocaleString()}
+                    </span>
+                    <Link 
+                      href={`/products/${product.id}`}
+                      className="text-sm font-medium text-zinc-500 hover:text-red-600 transition-colors"
+                    >
+                      ดูรายละเอียด ›
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
