@@ -3,9 +3,18 @@
     {
       "id": "u1",
       "username": "admin",
+      "email": "admin@test.com",
+      "password": "password123",
+      "role": "admin",
+      "name": "วิศวกร สมศักดิ์"
+    },
+    {
+      "id": "u2",
+      "username": "employee",
+      "email": "employee@test.com",
       "password": "password123",
       "role": "employee",
-      "name": "วิศวกร สมศักดิ์"
+      "name": "พนักงาน ประจำร้าน"
     }
   ],
   "products": [
@@ -22,11 +31,38 @@
       "name": "Huawei SUN2000-5KTL",
       "category": "อินเวอร์เตอร์",
       "price": 28500,
-      "stock": 5,   
+      "stock": 5,
       "image": "/file.svg"
     }
-    
   ],
   "orders": [],
-  "chats": []
+  "chats": [
+    {
+      "id": "msg-1783777282927-user",
+      "chatId": "USR-CUST-01",
+      "senderName": "สมชาย พลังงานดี",
+      "sender": "user",
+      "text": "Hello API test",
+      "timestamp": "20:41",
+      "isRead": true
+    },
+    {
+      "id": "msg-1783777393666-agent",
+      "chatId": "USR-CUST-01",
+      "senderName": "สมชาย พลังงานดี",
+      "sender": "agent",
+      "text": "test answer",
+      "timestamp": "20:43",
+      "isRead": true
+    },
+    {
+      "id": "msg-1783777428849-agent",
+      "chatId": "USR-CUST-01",
+      "senderName": "วิศวกร สมศักดิ์",
+      "sender": "agent",
+      "text": "test another browser",
+      "timestamp": "20:43",
+      "isRead": true
+    }
+  ]
 }

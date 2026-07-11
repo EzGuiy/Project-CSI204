@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google"; // สมมติว่าใช้ฟอนต์ Inter (หรือ Sarabun/Kanit ถ้าคุณตั้งไว้)
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import ChatWidget from "@/components/ChatWidget";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,12 +18,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th">
-      {/* เพิ่ม bg-zinc-50 และ text-zinc-900 ตรงนี้ เพื่อให้ทุกหน้าเป็นสีเดียวกันทั้งหมด */}
       <body className={`${inter.className} bg-zinc-50 text-zinc-900 min-h-screen flex flex-col`}>
         <Navbar />
         <main className="flex-grow">
           {children}
         </main>
+        <ChatWidget />
       </body>
     </html>
   );

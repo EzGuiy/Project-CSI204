@@ -42,43 +42,55 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
 
-    // จำลองเวลาดีเลย์ของเซิร์ฟเวอร์ 0.8 วินาที
-    setTimeout(() => {
-      // 1. ดึงข้อมูลบัญชีที่ลูกค้าสมัครเข้ามาใหม่จาก Local Storage
-      const registeredUsers = JSON.parse(localStorage.getItem('solar_users') || '[]');
-      
-      // 2. นำข้อมูลทดสอบ (mockUsers) มารวมกับบัญชีที่สมัครใหม่
-      const allValidUsers = [...mockUsers, ...registeredUsers];
-      
-      // 3. ค้นหาว่ามีอีเมลและรหัสผ่านตรงกับในระบบหรือไม่
-      const user = allValidUsers.find((u: any) => u.email === email && u.password === password);
-  
-      if (user) {
-        // 🔐 ลบ Password ออกก่อนเก็บเป็น JSON Session ลง Local Storage
-        const sessionData = {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        };
-        
-        localStorage.setItem('solar_session', JSON.stringify(sessionData));
-        
-        alert(`✅ เข้าสู่ระบบสำเร็จ!\nยินดีต้อนรับ: ${user.name}\nสิทธิ์การใช้งาน: ${user.role.toUpperCase()}`);
-        
-        // ⚡ เงื่อนไขในการ Redirect ไปยังหน้าต่าง ๆ ตาม Role
-        if (user.role === 'admin') {
-          // หากเป็น Admin ให้ส่งไปที่หน้าแอดมินแดชบอร์ดทันที
-          router.push('/admin/dashboard');
-        } else {
-          // หากเป็นสิทธิ์อื่น ๆ ให้กลับไปหน้าแรกและรีโหลดเพื่ออัปเดตสถานะ Navbar
-          window.location.href = '/'; 
+    // ดึงรายชื่อผู้ใช้จาก API
+    fetch('/api/users')
+      .then(async (res) => {
+        let dbUsers = [];
+        if (res.ok) {
+          dbUsers = await res.json();
         }
-      } else {
-        setError('❌ อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
-      }
-      setIsLoading(false);
-    }, 800);
+        
+        // รวมผู้ใช้ทั้งหมด: Mock + DB
+        const allValidUsers = [...mockUsers, ...dbUsers];
+        
+        // ค้นหาผู้ใช้ที่ต้องการเข้าสู่ระบบ
+        const user = allValidUsers.find(
+          (u: any) => 
+            (u.email === email || u.username === email) && 
+            u.password === password
+        );
+
+        if (user) {
+          // 🔐 บันทึกเซสชันลง Local Storage
+          const sessionData = {
+            id: user.id,
+            name: user.name,
+            email: user.email || user.username,
+            role: user.role
+          };
+          
+          localStorage.setItem('solar_session', JSON.stringify(sessionData));
+          
+          alert(`✅ เข้าสู่ระบบสำเร็จ!\nยินดีต้อนรับ: ${user.name}\nสิทธิ์การใช้งาน: ${user.role.toUpperCase()}`);
+          
+          // ⚡ เงื่อนไขในการ Redirect ไปยังหน้าต่าง ๆ ตาม Role
+          if (user.role === 'admin') {
+            window.location.href = '/admin/dashboard';
+          } else if (user.role === 'employee') {
+            window.location.href = '/dashboard';
+          } else {
+            window.location.href = '/'; 
+          }
+        } else {
+          setError('❌ อีเมล/ชื่อผู้ใช้งาน หรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
+        }
+      })
+      .catch((err) => {
+        setError(`❌ เกิดข้อผิดพลาดในการเชื่อมต่อระบบล็อกอิน: ${err.message || ''}`);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   return (
@@ -110,16 +122,16 @@ export default function LoginPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1" htmlFor="email">
-                อีเมล (Email)
+                อีเมล หรือ ชื่อผู้ใช้งาน (Email or Username)
               </label>
               <input
                 id="email"
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="appearance-none relative block w-full px-4 py-3 border border-slate-300 placeholder-slate-400 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors sm:text-sm"
-                placeholder="name@company.com"
+                placeholder="admin@solartech.com หรือ admin"
               />
             </div>
             <div>

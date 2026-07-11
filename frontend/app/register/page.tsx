@@ -31,38 +31,38 @@ export default function RegisterPage() {
 
     setIsLoading(true);
 
-    // จำลองเวลาดีเลย์ของเซิร์ฟเวอร์
-    setTimeout(() => {
-      // 2. ดึงข้อมูลผู้ใช้เก่าจาก Local Storage (ถ้ามี)
-      const existingUsers = JSON.parse(localStorage.getItem('solar_users') || '[]');
-      
-      // 3. ตรวจสอบว่าอีเมลนี้ถูกใช้สมัครไปแล้วหรือยัง
-      const isEmailTaken = existingUsers.some((u: any) => u.email === email);
-      
-      if (isEmailTaken) {
-        setError('❌ อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น');
+    const newUser = {
+      id: `USR-CUST-${Date.now().toString().slice(-6)}`,
+      name: name,
+      email: email,
+      username: email,
+      password: password,
+      role: 'customer'
+    };
+
+    // ส่งคำขอสมัครสมาชิกไปยัง API
+    fetch('/api/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newUser),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'สมัครสมาชิกไม่สำเร็จ');
+        }
+        
+        alert('✅ สมัครสมาชิกสำเร็จ! ระบบจะพาท่านไปยังหน้าเข้าสู่ระบบ');
+        router.push('/login');
+      })
+      .catch((err: any) => {
+        setError(`❌ ${err.message || 'เกิดข้อผิดพลาดในการบันทึกบัญชีผู้ใช้งาน'}`);
+      })
+      .finally(() => {
         setIsLoading(false);
-        return;
-      }
-
-      // 4. สร้าง Object ผู้ใช้งานใหม่ (กำหนด Role ให้เป็น Customer เสมอสำหรับหน้าเว็บ)
-      const newUser = {
-        id: `USR-CUST-${Date.now().toString().slice(-6)}`, // สร้าง ID สุ่มแบบง่ายๆ
-        name: name,
-        email: email,
-        password: password,
-        role: 'customer'
-      };
-
-      // 5. บันทึกลง Local Storage (จำลองการ INSERT ลง Database)
-      existingUsers.push(newUser);
-      localStorage.setItem('solar_users', JSON.stringify(existingUsers));
-      
-      alert('✅ สมัครสมาชิกสำเร็จ! ระบบจะพาท่านไปยังหน้าเข้าสู่ระบบ');
-      router.push('/login');
-      
-      setIsLoading(false);
-    }, 800);
+      });
   };
 
   return (

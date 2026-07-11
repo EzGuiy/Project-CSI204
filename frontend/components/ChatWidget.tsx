@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface Product {
   id: string;
@@ -13,27 +14,27 @@ interface Product {
 
 interface Message {
   id: string;
+  chatId: string;
+  senderName: string;
   sender: 'user' | 'agent';
   text?: string;
   image?: string; // Base64 image
   product?: Product; // แนบสินค้า
   timestamp: string;
+  isRead: boolean;
 }
 
 export default function ChatWidget() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'msg-init',
-      sender: 'agent',
-      text: 'สวัสดีครับ! ยินดีต้อนรับสู่ SolarTech แหล่งรวมอุปกรณ์โซล่าเซลล์ครบวงจร ☀️ มีข้อสงสัยเกี่ยวกับสินค้า คำนวณขนาดติดตั้ง หรือต้องการส่งรูปภาพหน้างานเพื่อให้เราประเมิน สอบถามเข้ามาได้เลยครับผม!',
-      timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-    }
-  ]);
+  const [chatId, setChatId] = useState<string>('');
+  const [chatName, setChatName] = useState<string>('');
+  const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [attachedProduct, setAttachedProduct] = useState<Product | null>(null);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -45,19 +46,102 @@ export default function ChatWidget() {
     }
   }, [messages, isTyping]);
 
-  // ดึงข้อความแชตจาก LocalStorage (ถ้าเคยคุยค้างไว้)
+  // กำหนด Chat ID & Name ของผู้ใช้ (ใช้ Session ถ้าล็อกอินอยู่ หรือสุ่ม Guest ID)
   useEffect(() => {
-    const savedChat = localStorage.getItem('solar_chat_history');
-    if (savedChat) {
-      setMessages(JSON.parse(savedChat));
-    }
+    const getOrInitChatSession = () => {
+      const session = localStorage.getItem('solar_session');
+      let currentId = '';
+      let currentName = '';
+
+      if (session) {
+        try {
+          const data = JSON.parse(session);
+          if (data.id) currentId = data.id;
+          if (data.name) currentName = data.name;
+          if (data.role) setCurrentUserRole(data.role);
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        setCurrentUserRole('');
+      }
+
+      if (!currentId) {
+        let guestId = localStorage.getItem('solar_chat_guest_id');
+        if (!guestId) {
+          guestId = 'GUEST-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+          localStorage.setItem('solar_chat_guest_id', guestId);
+        }
+        currentId = guestId;
+      }
+
+      if (!currentName) {
+        let guestName = localStorage.getItem('solar_chat_guest_name');
+        if (!guestName) {
+          guestName = `ลูกค้า (${currentId})`;
+          localStorage.setItem('solar_chat_guest_name', guestName);
+        }
+        currentName = guestName;
+      }
+
+      setChatId(currentId);
+      setChatName(currentName);
+    };
+
+    getOrInitChatSession();
+
+    // ดักจับเมื่อมีการเปลี่ยน session ในแท็บอื่น
+    window.addEventListener('storage', getOrInitChatSession);
+    return () => window.removeEventListener('storage', getOrInitChatSession);
   }, []);
 
-  // บันทึกข้อความแชตลง LocalStorage
-  const saveChatHistory = (updatedMessages: Message[]) => {
-    setMessages(updatedMessages);
-    localStorage.setItem('solar_chat_history', JSON.stringify(updatedMessages));
+
+
+  // โหลดประวัติการสนทนาของฉันจาก API
+  const loadMyChatHistory = async (currentChatId: string) => {
+    if (!currentChatId) return;
+    try {
+      const res = await fetch('/api/chats');
+      if (res.ok) {
+        const allChats: Message[] = await res.json();
+        const filtered = allChats.filter((m) => m.chatId === currentChatId);
+        if (filtered.length === 0) {
+          // คืนค่าข้อความต้อนรับเริ่มต้น
+          setMessages([
+            {
+              id: 'msg-init',
+              chatId: currentChatId,
+              senderName: 'SolarTech Support',
+              sender: 'agent',
+              text: 'สวัสดีครับ! ยินดีต้อนรับสู่ SolarTech แหล่งรวมอุปกรณ์โซล่าเซลล์ครบวงจร ☀️ มีข้อสงสัยเกี่ยวกับสินค้า คำนวณขนาดติดตั้ง หรือต้องการส่งรูปภาพหน้างานเพื่อให้เราประเมิน สอบถามเข้ามาได้เลยครับผม!',
+              timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+              isRead: true,
+            },
+          ]);
+        } else {
+          setMessages(filtered);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
+
+  // โหลดครั้งแรกเมื่อได้ chatId
+  useEffect(() => {
+    if (chatId) {
+      loadMyChatHistory(chatId);
+    }
+  }, [chatId]);
+
+  // Polling ข้อความใหม่ทุกๆ 3 วินาที
+  useEffect(() => {
+    if (!chatId) return;
+    const interval = setInterval(() => {
+      loadMyChatHistory(chatId);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [chatId]);
 
   // ดักจับ Event สำหรับเปิดแชตพร้อมแนบสินค้า
   useEffect(() => {
@@ -104,72 +188,78 @@ export default function ChatWidget() {
     setAttachedProduct(null);
   };
 
-  // ฟังก์ชันข้อความตอบกลับอัตโนมัติของบอตจำลอง (Mock Support Agent)
-  const generateAgentReply = (userMsg: Message) => {
-    setIsTyping(true);
-
-    setTimeout(() => {
-      const replyText = 'ขอบคุณสำหรับคำถามครับ ทาง SolarTech ยินดีให้บริการ หากต้องการข้อมูลสินค้าเชิงลึก แคตตาล็อกฉบับเต็ม หรือสิทธิพิเศษการรับประกัน สามารถส่งข้อความถามต่อหรือทิ้งเบอร์ติดต่อไว้ให้เจ้าหน้าที่ติดต่อกลับได้เลยครับ';
-
-      const newAgentMsg: Message = {
-        id: `msg-${Date.now()}-agent`,
-        sender: 'agent',
-        text: replyText,
-        timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-      };
-
-      setIsTyping(false);
-      saveChatHistory([...messages, userMsg, newAgentMsg]);
-    }, 1800); // ดีเลย์การตอบกลับ 1.8 วินาที
-  };
-
   // ส่งข้อความ
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim() && !attachedImage && !attachedProduct) return;
-
-    const userSession = localStorage.getItem('solar_session');
-    const senderName = userSession ? JSON.parse(userSession).name : 'ผู้ใช้งาน';
+    if (!chatId) return;
 
     const newUserMsg: Message = {
       id: `msg-${Date.now()}-user`,
+      chatId: chatId,
+      senderName: chatName,
       sender: 'user',
       text: messageText.trim() || undefined,
       image: attachedImage || undefined,
       product: attachedProduct || undefined,
       timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+      isRead: false,
     };
 
-    // อัปเดตฝั่งผู้ใช้งานทันที
-    const updatedHistory = [...messages, newUserMsg];
-    setMessages(updatedHistory);
-    localStorage.setItem('solar_chat_history', JSON.stringify(updatedHistory));
+    try {
+      await fetch('/api/chats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newUserMsg),
+      });
+      // โหลดข้อความเพื่อแสดงผลทันที
+      loadMyChatHistory(chatId);
+    } catch (e) {
+      console.error(e);
+    }
 
     // ล้างช่องป้อนและสิ่งที่แนบมา
     setMessageText('');
     setAttachedImage(null);
     setAttachedProduct(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-
-    // เรียกบอตตอบกลับ
-    generateAgentReply(newUserMsg);
   };
 
   // เคลียร์ประวัติการคุย
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
     if (confirm('คุณต้องการลบประวัติการสนทนาทั้งหมดหรือไม่?')) {
-      const resetMessages: Message[] = [
-        {
-          id: 'msg-init-reset',
-          sender: 'agent',
-          text: 'รีเซ็ตระบบแชตเรียบร้อยครับ มีข้อมูลส่วนไหนให้ผมช่วยเหลือเพิ่มเติมสอบถามได้เลยครับ!',
-          timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-        }
-      ];
-      setMessages(resetMessages);
-      localStorage.removeItem('solar_chat_history');
+      try {
+        await fetch(`/api/chats?chatId=${chatId}`, { method: 'DELETE' });
+        // รีเซ็ต local state
+        setMessages([
+          {
+            id: 'msg-init-reset',
+            chatId: chatId,
+            senderName: 'SolarTech Support',
+            sender: 'agent',
+            text: 'รีเซ็ตระบบแชตเรียบร้อยครับ มีข้อมูลส่วนไหนให้ผมช่วยเหลือเพิ่มเติมสอบถามได้เลยครับ!',
+            timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+            isRead: true,
+          },
+        ]);
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
+
+  // ซ่อนปุ่มแชทหากไม่ใช่ลูกค้า (บังคับล็อกอินเป็น customer ถึงจะแชตได้)
+  if (
+    currentUserRole !== 'customer' ||
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/dashboard' ||
+    pathname?.startsWith('/admin')
+  ) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] font-sans">
@@ -268,7 +358,7 @@ export default function ChatWidget() {
                   </div>
                   
                   <p className={`text-[10px] text-slate-400 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                    {msg.timestamp}
+                    {msg.timestamp} {msg.sender === 'user' && msg.isRead && <span className="text-blue-500 font-medium ml-1">✓ อ่านแล้ว</span>}
                   </p>
                 </div>
               </div>
