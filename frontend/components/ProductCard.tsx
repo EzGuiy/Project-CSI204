@@ -15,7 +15,8 @@ interface ProductProps {
 export default function ProductCard({ id, name, category, price, capacity, imageUrl }: ProductProps) {
   const router = useRouter();
 
-  const addToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const session = localStorage.getItem('solar_session');
     
     if (!session) {
@@ -53,8 +54,15 @@ export default function ProductCard({ id, name, category, price, capacity, image
     window.dispatchEvent(event);
   };
 
+  const handleCardClick = () => {
+    router.push(`/products/${id}`);
+  };
+
   return (
-    <div className="group cursor-pointer flex flex-col h-full border border-zinc-100 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+    <div 
+      onClick={handleCardClick}
+      className="group cursor-pointer flex flex-col h-full border border-zinc-100 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow"
+    >
       
       {/* ⬜ ส่วนรูปภาพ (พื้นหลังสีเทาอ่อนแบบ Huawei) */}
       <div className="bg-[#f7f7f7] aspect-square w-full relative flex items-center justify-center p-6 overflow-hidden rounded-lg">
@@ -97,7 +105,7 @@ export default function ProductCard({ id, name, category, price, capacity, image
             
             {/* ปุ่มสั่งซื้อแบบดั้งเดิม */}
             <button 
-              onClick={addToCart}
+              onClick={handleAddToCart}
               className="flex-1 text-[13px] font-semibold text-white bg-slate-900 hover:bg-red-600 py-2 rounded-lg transition-colors flex items-center justify-center gap-1"
             >
               สั่งซื้อ <span className="text-lg leading-none mt-[-2px]">›</span>
