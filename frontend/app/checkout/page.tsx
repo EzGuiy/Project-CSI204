@@ -86,14 +86,6 @@ function isValidExpiry(exp: string): boolean {
   return expDate > now;
 }
 
-// สร้าง Order ID
-function generateOrderId(): string {
-  const now = new Date();
-  const d = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const r = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `ORD-${d}-${r}`;
-}
-
 // Card network logos (SVG inline)
 const CardNetworkLogo = ({ network }: { network: string }) => {
   if (network === 'visa') {
@@ -228,13 +220,11 @@ export default function CheckoutPage() {
   // =====================
   // Submit — สร้าง Order
   // =====================
-  const handleConfirmOrder = () => {
+  const handleConfirmOrder = async () => {
     setIsProcessing(true);
 
-    setTimeout(() => {
-      const orderId = generateOrderId();
-      const order = {
-        id: orderId,
+    try {
+      const orderPayload = {
         userId: userId,
         date: new Date().toISOString(),
         items: cartItems,
@@ -245,34 +235,47 @@ export default function CheckoutPage() {
         paymentMethod,
         cardLast4: paymentMethod === 'credit_card' ? card.number.replace(/\s/g, '').slice(-4) : null,
         cardNetwork: paymentMethod === 'credit_card' ? cardNetwork : null,
-        status: 'confirmed',
-        carrier: null,
-        trackingNumber: null,
         statusHistory: [
           {
-            status: 'confirmed',
-            label: 'ยืนยันคำสั่งซื้อแล้ว',
+            status: paymentMethod === 'qr' ? 'รอชำระเงิน' : 'ตรวจสอบ',
+            label: paymentMethod === 'qr' ? 'รอชำระเงิน' : 'ยืนยันคำสั่งซื้อ',
             date: new Date().toISOString(),
-            note: 'ชำระเงินสำเร็จ ระบบกำลังจัดเตรียมสินค้าสำหรับจัดส่ง',
+            note: 'ระบบได้รับคำสั่งซื้อของคุณแล้ว'
           }
-        ],
+        ]
       };
 
-      // บันทึก Order
+      // 1. ส่งข้อมูลไปบันทึกที่ API เพื่อให้ข้อมูลไปอยู่ใน db.json (พนักงานจะได้เห็น)
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload),
+      });
+
+      if (!response.ok) throw new Error('ไม่สามารถสร้างคำสั่งซื้อได้');
+
+      const data = await response.json();
+      const savedOrder = data.order; 
+
+      // 2. บันทึกลง LocalStorage ด้วย (เพื่อให้หน้า Success และ Tracking ของลูกค้ายังทำงานได้ตามเดิมก่อน)
       const existingOrders = JSON.parse(localStorage.getItem('solar_orders') || '[]');
-      existingOrders.unshift(order);
+      existingOrders.unshift(savedOrder);
       localStorage.setItem('solar_orders', JSON.stringify(existingOrders));
 
-      // ล้างตะกร้า
+      // 3. ล้างตะกร้า
       localStorage.removeItem('solar_cart');
       window.dispatchEvent(new Event('cartUpdated'));
 
-      // เก็บ orderId ใน sessionStorage สำหรับหน้า success
-      sessionStorage.setItem('last_order_id', orderId);
+      // 4. เก็บ orderId ใน sessionStorage สำหรับดึงไปโชว์ในหน้า success
+      sessionStorage.setItem('last_order_id', savedOrder.id);
 
       setIsProcessing(false);
       router.push('/checkout/success');
-    }, 2000);
+    } catch (error) {
+      console.error('Error confirming order:', error);
+      alert('เกิดข้อผิดพลาดในการสั่งซื้อ กรุณาลองใหม่อีกครั้ง');
+      setIsProcessing(false);
+    }
   };
 
   // =====================

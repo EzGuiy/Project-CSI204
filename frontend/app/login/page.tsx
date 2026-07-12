@@ -31,7 +31,7 @@ export default function LoginPage() {
           role: user.role,
           name: user.name
         };
-        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('solar_session', JSON.stringify(userData));
         
         // 4. เช็คสิทธิ์และเด้งไปหน้าที่ถูกต้องตาม Role
         if (user.role === 'admin') {

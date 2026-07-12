@@ -20,65 +20,94 @@
       "id": "u3",
       "username": "customer01",
       "email": "customer@test.com",
-      "password": "123",
+      "password": "1234",
       "role": "customer",
       "name": "คุณลูกค้า สมชาย"
     }
   ],
   "products": [
     {
-      "id": "p1",
+      "id": "1",
       "name": "Jinko Solar Tiger Pro 550W",
-      "category": "บ้านพักอาศัย",
+      "category": "บ้านพักอาศัย (Residential)",
       "price": 4500,
-      "stock": 1,
+      "stock": 0,
       "image": "/Jiinko_550w.jpg"
     },
     {
-      "id": "p2",
+      "id": "3",
       "name": "Huawei SUN2000-5KTL",
       "category": "อินเวอร์เตอร์",
       "price": 28500,
       "stock": 5,
-      "image": "/file.svg"
+      "image": "/OIP(1).jpg"
     },
     {
-      "id": "u3",
-      "username": "customer01",
-      "email": "customer@test.com",
-      "password": "1234",
-      "role": "customer",
-      "name": "คุณลูกค้า สมชาย"
+      "id": "6",
+      "name": "แบตเตอรี่ลิเธียม Huawei LUNA2000",
+      "category": "ระบบกักเก็บพลังงาน",
+      "price": 95000,
+      "stock": 2,
+      "image": "/OIP(3).jpg"
     }
   ],
-  "orders": [],
+  "orders": [
+    {
+      "userId": "u3",
+      "date": "2026-07-12T15:31:10.585Z",
+      "items": [
+        {
+          "id": "3",
+          "name": "Huawei SUN2000-5KTL",
+          "price": 28500,
+          "quantity": 1,
+          "icon": "/OIP(1).jpg"
+        }
+      ],
+      "subtotal": 28500,
+      "shippingFee": 1500,
+      "total": 30000,
+      "shipping": {
+        "fullName": "คุณลูกค้า สมชาย",
+        "phone": "0983818333",
+        "address": "123/45",
+        "subDistrict": "pp",
+        "district": "asd",
+        "province": "asd",
+        "postalCode": "13123"
+      },
+      "paymentMethod": "qr",
+      "cardLast4": null,
+      "cardNetwork": null,
+      "statusHistory": [
+        {
+          "status": "รอชำระเงิน",
+          "label": "รอชำระเงิน",
+          "date": "2026-07-12T15:31:10.585Z",
+          "note": "ระบบได้รับคำสั่งซื้อของคุณแล้ว"
+        }
+      ],
+      "id": "ord-1783870270594",
+      "status": "ตรวจสอบ",
+      "createdAt": "2026-07-12T15:31:10.594Z"
+    }
+  ],
   "chats": [
     {
-      "id": "msg-1783777282927-user",
-      "chatId": "USR-CUST-01",
-      "senderName": "สมชาย พลังงานดี",
+      "id": "msg-1783866178700-user",
+      "chatId": "u3",
+      "senderName": "คุณลูกค้า สมชาย",
       "sender": "user",
-      "text": "Hello API test",
-      "timestamp": "20:41",
-      "isRead": true
-    },
-    {
-      "id": "msg-1783777393666-agent",
-      "chatId": "USR-CUST-01",
-      "senderName": "สมชาย พลังงานดี",
-      "sender": "agent",
-      "text": "test answer",
-      "timestamp": "20:43",
-      "isRead": true
-    },
-    {
-      "id": "msg-1783777428849-agent",
-      "chatId": "USR-CUST-01",
-      "senderName": "วิศวกร สมศักดิ์",
-      "sender": "agent",
-      "text": "test another browser",
-      "timestamp": "20:43",
-      "isRead": true
+      "product": {
+        "id": "1",
+        "name": "Jinko Solar Tiger Pro 550W",
+        "category": "บ้านพักอาศัย (Residential)",
+        "price": 4500,
+        "capacity": "550W",
+        "imageUrl": "/Jiinko_550w.jpg"
+      },
+      "timestamp": "21:22",
+      "isRead": false
     }
   ]
 }

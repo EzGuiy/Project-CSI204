@@ -52,3 +52,26 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'ไม่สามารถลบสินค้าได้' }, { status: 500 });
   }
 }
+// 🟢 เพิ่มสินค้าใหม่ (สำหรับพนักงานและแอดมิน)
+export async function POST(request: Request) {
+  try {
+    const newProduct = await request.json();
+    const fileData = await fs.readFile(getFilePath(), 'utf8');
+    const db = JSON.parse(fileData);
+
+    // สร้าง ID ใหม่ให้สินค้า
+    const nextId = (db.products.length > 0 ? Math.max(...db.products.map((p: any) => parseInt(p.id) || 0)) + 1 : 1).toString();
+    
+    const productToSave = {
+      ...newProduct,
+      id: nextId,
+    };
+
+    db.products.push(productToSave);
+    await fs.writeFile(getFilePath(), JSON.stringify(db, null, 2));
+
+    return NextResponse.json({ message: 'เพิ่มสินค้าสำเร็จ', product: productToSave }, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ error: 'ไม่สามารถเพิ่มสินค้าได้' }, { status: 500 });
+  }
+}
