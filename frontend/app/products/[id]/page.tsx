@@ -245,11 +245,56 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState<'specs' | 'installation' | 'warranty'>('specs');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // 🌟 ดึงข้อมูลจาก API และผสานเข้ากับ Mock หรือสร้างใหม่หากเป็นสินค้าที่พนักงานเพิ่งเพิ่ม
   useEffect(() => {
-    if (id && mockProductsDb[id]) {
-      setProduct(mockProductsDb[id]);
-    }
-    setIsLoading(false);
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch('/api/products');
+        if (response.ok) {
+          const products = await response.json();
+          const dbProduct = products.find((p: any) => p.id === id);
+          
+          if (dbProduct && mockProductsDb[id]) {
+            // กรณีสินค้าเก่า: รวมข้อมูล mock เข้ากับข้อมูลจาก DB
+            setProduct({
+              ...mockProductsDb[id],
+              price: dbProduct.price,
+              stock: dbProduct.stock,
+              name: dbProduct.name
+            });
+          } else if (dbProduct) {
+            // กรณีสินค้าใหม่ที่พนักงานเพิ่งเพิ่ม!: นำข้อมูลจาก DB มาสร้างโครงสร้างใหม่
+            setProduct({
+              id: dbProduct.id,
+              name: dbProduct.name,
+              category: dbProduct.category,
+              price: dbProduct.price,
+              capacity: '-',
+              imageUrl: dbProduct.image || '/file.svg',
+              brand: 'SolarTech (General)',
+              stock: dbProduct.stock,
+              description: dbProduct.description ? [dbProduct.description] : ['สินค้านี้ยังไม่มีรายละเอียดเพิ่มเติม'],
+              specs: [
+                { label: 'ข้อมูลทั่วไป', value: 'ดูรายละเอียดเชิงลึกได้จากคู่มือที่แนบมากับสินค้า' }
+              ],
+              dimensions: 'อ้างอิงตามคู่มือสินค้า',
+              weight: 'อ้างอิงตามคู่มือสินค้า',
+              certifications: ['มาตรฐานความปลอดภัยสากล'],
+              warranty: 'รับประกันสินค้า 1 ปี ตามเงื่อนไขของบริษัท',
+              installationSteps: ['โปรดติดต่อทีมช่างผู้ชำนาญการของ SolarTech เพื่อดำเนินการติดตั้งให้ได้มาตรฐาน']
+            });
+          } else if (mockProductsDb[id]) {
+            setProduct(mockProductsDb[id]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProduct();
   }, [id]);
 
   if (isLoading) {
@@ -273,8 +318,14 @@ export default function ProductDetailPage() {
     );
   }
 
+  // 🌟 ป้องกันไม่ให้เพิ่มหรือลดจำนวนเกินสต๊อก
   const updateQuantity = (val: number) => {
-    setQuantity(prev => Math.max(1, prev + val));
+    setQuantity(prev => {
+      const newQty = prev + val;
+      if (newQty < 1) return 1;
+      if (newQty > product.stock) return product.stock;
+      return newQty;
+    });
   };
 
   const handleAddToCart = () => {
@@ -289,7 +340,12 @@ export default function ProductDetailPage() {
     const existingCart = JSON.parse(localStorage.getItem('solar_cart') || '[]');
     const existingItem = existingCart.find((item: any) => item.id === product.id);
     
+    // 🌟 เช็คว่ารวมกับของเดิมในตะกร้าแล้วเกินสต๊อกหรือไม่
     if (existingItem) {
+      if (existingItem.quantity + quantity > product.stock) {
+        alert(`❌ ขออภัยค่ะ สินค้านี้มีในสต๊อกเพียง ${product.stock} ชิ้น (คุณมีในตะกร้าแล้ว ${existingItem.quantity} ชิ้น)`);
+        return;
+      }
       existingItem.quantity += quantity;
     } else {
       existingCart.push({ 
@@ -351,13 +407,17 @@ export default function ProductDetailPage() {
             <img 
               src={product.imageUrl} 
               alt={product.name} 
-              className="w-full h-full max-h-[420px] object-contain drop-shadow-md mix-blend-multiply" 
+              className={`w-full h-full max-h-[420px] object-contain drop-shadow-md mix-blend-multiply ${product.stock === 0 ? 'opacity-50 grayscale' : ''}`} 
             />
-            {product.stock <= 10 && (
+            {product.stock === 0 ? (
+               <span className="absolute top-4 right-4 bg-zinc-800 text-white text-xs px-3 py-1 font-bold rounded-full">
+                 สินค้าหมด
+               </span>
+            ) : product.stock <= 10 ? (
               <span className="absolute top-4 right-4 bg-amber-100 text-amber-800 text-xs px-3 py-1 font-bold rounded-full">
                 สินค้าจำนวนจำกัด: เหลืออีกเพียง {product.stock} ชิ้น
               </span>
-            )}
+            ) : null}
           </div>
 
           {/* 📝 Right Side: Product Details Card */}
@@ -406,9 +466,15 @@ export default function ProductDetailPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs bg-emerald-50 text-emerald-600 border border-emerald-100 font-semibold px-2.5 py-1 rounded-md">
-                    มีสินค้าในสต็อกพร้อมส่ง
-                  </span>
+                  {product.stock > 0 ? (
+                    <span className="text-xs bg-emerald-50 text-emerald-600 border border-emerald-100 font-semibold px-2.5 py-1 rounded-md">
+                      มีสินค้าในสต็อกพร้อมส่ง
+                    </span>
+                  ) : (
+                    <span className="text-xs bg-red-50 text-red-600 border border-red-100 font-semibold px-2.5 py-1 rounded-md">
+                      สินค้าหมดชั่วคราว
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -420,14 +486,16 @@ export default function ProductDetailPage() {
                 <div className="flex items-center gap-3 bg-zinc-100 p-1.5 rounded-lg border border-zinc-200 w-fit">
                   <button 
                     onClick={() => updateQuantity(-1)}
-                    className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm hover:bg-zinc-50 font-bold text-zinc-600 text-lg"
+                    disabled={quantity <= 1 || product.stock === 0}
+                    className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm hover:bg-zinc-50 font-bold text-zinc-600 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     -
                   </button>
-                  <span className="w-10 text-center font-bold text-zinc-900 text-base">{quantity}</span>
+                  <span className="w-10 text-center font-bold text-zinc-900 text-base">{product.stock === 0 ? 0 : quantity}</span>
                   <button 
                     onClick={() => updateQuantity(1)}
-                    className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm hover:bg-zinc-50 font-bold text-zinc-600 text-lg"
+                    disabled={quantity >= product.stock || product.stock === 0}
+                    className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm hover:bg-zinc-50 font-bold text-zinc-600 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     +
                   </button>
@@ -443,12 +511,17 @@ export default function ProductDetailPage() {
                   <span className="text-lg">💬</span> สอบถามแอดมิน / ขอใบเสนอราคา
                 </button>
 
-                {/* 🛒 Add to Cart Button */}
+                {/* 🛒 Add to Cart Button (เช็คสต๊อก) */}
                 <button
                   onClick={handleAddToCart}
-                  className="flex-1 bg-slate-900 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm shadow-md"
+                  disabled={product.stock === 0}
+                  className={`flex-1 font-bold py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm shadow-md ${
+                    product.stock === 0 
+                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' 
+                      : 'bg-slate-900 hover:bg-red-600 text-white'
+                  }`}
                 >
-                  <span>🛒</span> เพิ่มลงตะกร้าสินค้า
+                  <span>{product.stock === 0 ? 'สินค้าหมด' : '🛒 เพิ่มลงตะกร้าสินค้า'}</span>
                 </button>
               </div>
             </div>

@@ -23,26 +23,26 @@ export default function LoginPage() {
         (u.username === username || u.email === username) && u.password === password
       );
 
-      if (user) {
-        // 3. ถ้าเจอระบบจะ "จำ" ข้อมูลลงในเบราว์เซอร์
+     if (user) {
         const userData = {
           id: user.id,
           username: user.username,
           role: user.role,
           name: user.name
         };
+        
+        // 🌟 แก้ไข: เปลี่ยนจาก 'user' เป็น 'solar_session'
         localStorage.setItem('solar_session', JSON.stringify(userData));
         
-        // 4. เช็คสิทธิ์และเด้งไปหน้าที่ถูกต้องตาม Role
         if (user.role === 'admin') {
-          router.push('/admin/dashboard'); // แอดมินไปหน้าควบคุม
+          router.push('/admin/dashboard');
         } else if (user.role === 'employee') {
-          router.push('/dashboard'); // พนักงานไปหน้าจัดการสต๊อก
+          router.push('/dashboard');
         } else {
-          router.push('/'); // ลูกค้าไปหน้าแรก
+          router.push('/');
         }
       } else {
-        setErrorMsg('ชื่อผู้ใช้ หรือ รหัสผ่าน ไม่ถูกต้อง');
+        setErrorMsg('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
       }
     } catch (error) {
       setErrorMsg('ระบบเกิดข้อผิดพลาด กรุณาลองใหม่');

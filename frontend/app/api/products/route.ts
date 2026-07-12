@@ -15,25 +15,31 @@ export async function GET() {
   }
 }
 
-// 🟡 อัปเดตสต๊อกสินค้า (สำหรับพนักงาน)
+// 🟡 อัปเดตสินค้า (ทั้งเพิ่ม/ลดสต๊อก และ แก้ไขข้อมูลทั้งหมด)
 export async function PUT(request: Request) {
   try {
-    const { id, amount } = await request.json();
+    const body = await request.json();
     const fileData = await fs.readFile(getFilePath(), 'utf8');
     const db = JSON.parse(fileData);
 
-    // หาและอัปเดตสต๊อก
-    db.products = db.products.map((p: any) => 
-      p.id === id ? { ...p, stock: Math.max(0, p.stock + amount) } : p
-    );
-
-    await fs.writeFile(getFilePath(), JSON.stringify(db, null, 2));
-    return NextResponse.json({ message: 'อัปเดตสต๊อกสำเร็จ' }, { status: 200 });
+    const index = db.products.findIndex((p: any) => p.id === body.id);
+    if (index > -1) {
+      if (body.amount !== undefined) {
+        // 1. กรณีหน้าเว็บส่งแค่ { id, amount } มา แปลว่ากดปุ่ม +/- สต๊อก
+        db.products[index].stock = Math.max(0, db.products[index].stock + body.amount);
+      } else {
+        // 2. กรณีหน้าเว็บส่งข้อมูลมาครบ แปลว่ากดเซฟจากฟอร์ม "แก้ไขสินค้า"
+        db.products[index] = { ...db.products[index], ...body };
+      }
+      await fs.writeFile(getFilePath(), JSON.stringify(db, null, 2));
+      return NextResponse.json({ message: 'อัปเดตสำเร็จ', product: db.products[index] }, { status: 200 });
+    } else {
+      return NextResponse.json({ error: 'ไม่พบสินค้า' }, { status: 404 });
+    }
   } catch (error) {
-    return NextResponse.json({ error: 'ไม่สามารถอัปเดตสต๊อกได้' }, { status: 500 });
+    return NextResponse.json({ error: 'ไม่สามารถอัปเดตสินค้าได้' }, { status: 500 });
   }
 }
-
 // 🔴 ลบสินค้า (สำหรับแอดมิน)
 export async function DELETE(request: Request) {
   try {

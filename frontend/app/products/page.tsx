@@ -16,7 +16,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // 1. เพิ่ม State สำหรับจัดการการค้นหาและกรอง
+  // State สำหรับจัดการการค้นหาและกรอง
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
 
@@ -37,14 +37,14 @@ export default function ProductsPage() {
     fetchProducts();
   }, []);
 
-  // 2. ฟังก์ชันกรองสินค้าตามการค้นหาและหมวดหมู่
+  // ฟังก์ชันกรองสินค้าตามการค้นหาและหมวดหมู่
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'ทั้งหมด' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  // 3. ดึงรายชื่อหมวดหมู่ทั้งหมดออกมาทำ Dropdown
+  // ดึงรายชื่อหมวดหมู่ทั้งหมดออกมาทำ Dropdown
   const categories = ['ทั้งหมด', ...Array.from(new Set(products.map(p => p.category)))];
 
   return (
@@ -57,7 +57,7 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* 🌟 ส่วนระบบค้นหาและกรองสินค้า */}
+        {/* ส่วนระบบค้นหาและกรองสินค้า */}
         <div className="bg-white p-4 rounded-lg shadow-sm border border-zinc-200 mb-8 flex flex-col sm:flex-row gap-4">
           <input 
             type="text" 
@@ -90,55 +90,70 @@ export default function ProductsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
-              <div key={product.id} className="bg-white rounded-sm border border-zinc-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow flex flex-col">
-                <div className="aspect-square bg-zinc-100 p-6 flex items-center justify-center relative">
+              <div key={product.id} className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden group hover:shadow-md transition-shadow flex flex-col">
+                
+                {/* 🌟 1. ลิงก์ที่รูปภาพสินค้า */}
+                <Link href={`/products/${product.id}`} className="aspect-square bg-[#f7f7f7] p-6 flex items-center justify-center relative block cursor-pointer">
                   <img 
                     src={product.image || '/file.svg'} 
                     alt={product.name}
-                    className="w-full h-full object-contain mix-blend-multiply"
+                    className={`w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500 ${product.stock === 0 ? 'opacity-50 grayscale' : ''}`}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/file.svg';
                     }}
                   />
                   {product.stock <= 5 && product.stock > 0 && (
-                    <span className="absolute top-2 right-2 bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded-sm">
-                      ใกล้หมด ({product.stock})
+                    <span className="absolute top-3 right-3 bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-md">
+                      เหลือ {product.stock} ชิ้น
                     </span>
                   )}
                   {product.stock === 0 && (
-                    <span className="absolute top-2 right-2 bg-zinc-800 text-white text-xs font-bold px-2 py-1 rounded-sm">
+                    <span className="absolute top-3 right-3 bg-zinc-800 text-white text-xs font-bold px-2 py-1 rounded-md">
                       สินค้าหมด
                     </span>
                   )}
-                </div>
+                </Link>
 
                 <div className="p-5 flex flex-col flex-grow">
                   <span className="text-xs font-medium text-zinc-400 mb-2 block">{product.category}</span>
-                  <h3 className="font-bold text-zinc-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                    {product.name}
-                  </h3>
-                  <div className="mt-auto pt-4 flex justify-between items-center">
-                    <span className="font-bold text-lg text-zinc-900">
-                      ฿{(product.price || 0).toLocaleString()}
-                    </span>
-                    
-                    {/* 🌟 เช็คสต๊อก: ถ้าเหลือ 0 ให้ปุ่มเป็นสีเทาและกดไม่ได้ */}
+                  
+                  {/* 🌟 2. ลิงก์ที่ชื่อสินค้า */}
+                  <Link href={`/products/${product.id}`}>
+                    <h3 className="font-bold text-zinc-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                      {product.name}
+                    </h3>
+                  </Link>
+                  
+                  <div className="mt-auto pt-4 flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-extrabold text-lg text-zinc-900">
+                        ฿{(product.price || 0).toLocaleString()}
+                      </span>
+                      {/* 🌟 3. ปุ่มดูรายละเอียด */}
+                      <Link 
+                        href={`/products/${product.id}`}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+                      >
+                        ดูรายละเอียด <span>›</span>
+                      </Link>
+                    </div>
+
+                    {/* ปุ่มสั่งซื้อ / สินค้าหมด */}
                     {product.stock > 0 ? (
                       <Link 
                         href={`/products/${product.id}`}
-                        className="text-sm font-bold text-white bg-slate-900 px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                        className="w-full text-center text-sm font-bold text-white bg-slate-900 px-4 py-2.5 rounded-lg hover:bg-blue-600 transition-colors"
                       >
-                        สั่งซื้อ
+                        สั่งซื้อสินค้า
                       </Link>
                     ) : (
                       <button 
                         disabled
-                        className="text-sm font-bold text-slate-400 bg-slate-200 px-4 py-2 rounded-md cursor-not-allowed"
+                        className="w-full text-center text-sm font-bold text-slate-400 bg-slate-100 px-4 py-2.5 rounded-lg cursor-not-allowed border border-slate-200"
                       >
-                        สินค้าหมด
+                        สินค้าหมดชั่วคราว
                       </button>
                     )}
-
                   </div>
                 </div>
               </div>

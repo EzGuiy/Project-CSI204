@@ -174,10 +174,14 @@ export default function CheckoutPage() {
   }, [router]);
 
   // คำนวณยอดเงิน
-  const subtotal = useMemo(() => cartItems.reduce((s, i) => s + i.price * i.quantity, 0), [cartItems]);
-  const shippingFee = (subtotal > 50000 || subtotal === 0) ? 0 : 1500;
-  const total = subtotal + shippingFee;
+const subtotal = useMemo(() => cartItems.reduce((s, i) => s + i.price * i.quantity, 0), [cartItems]);
 
+// 🌟 ต้องเป็นตัวเลข ไม่มีเครื่องหมายคำพูด
+const shippingFee = 0; // หรือถ้าอยากให้มีค่าจัดส่งก็ใส่เป็นตัวเลข เช่น 500
+// หรือถ้าเป็นแบบมีเงื่อนไขก็ต้องเป็นตัวเลขเช่นกัน:
+// const shippingFee = subtotal === 0 ? 0 : 500;
+
+const total = subtotal + shippingFee;
   // Card network
   const cardNetwork = useMemo(() => detectCardNetwork(card.number), [card.number]);
 
@@ -681,36 +685,14 @@ export default function CheckoutPage() {
                   {paymentMethod === 'qr' && (
                     <div className="text-center">
                       <div className="inline-block bg-white p-6 rounded-2xl border-2 border-slate-200 shadow-lg mb-6">
-                        {/* QR Code จำลอง */}
-                        <div className="w-48 h-48 bg-white relative mx-auto mb-4 p-2">
-                          <svg viewBox="0 0 200 200" className="w-full h-full">
-                            {/* Simulated QR pattern */}
-                            <rect width="200" height="200" fill="white"/>
-                            {/* Corner patterns */}
-                            <rect x="10" y="10" width="50" height="50" fill="black"/>
-                            <rect x="15" y="15" width="40" height="40" fill="white"/>
-                            <rect x="20" y="20" width="30" height="30" fill="black"/>
-                            
-                            <rect x="140" y="10" width="50" height="50" fill="black"/>
-                            <rect x="145" y="15" width="40" height="40" fill="white"/>
-                            <rect x="150" y="20" width="30" height="30" fill="black"/>
-                            
-                            <rect x="10" y="140" width="50" height="50" fill="black"/>
-                            <rect x="15" y="145" width="40" height="40" fill="white"/>
-                            <rect x="20" y="150" width="30" height="30" fill="black"/>
-                            
-                            {/* Data pattern */}
-                            {Array.from({ length: 12 }).map((_, row) =>
-                              Array.from({ length: 12 }).map((_, col) => {
-                                const show = (row * 7 + col * 13 + row * col) % 3 !== 0;
-                                if (!show) return null;
-                                const x = 70 + col * 8;
-                                const y = 70 + row * 8;
-                                if (x > 180 || y > 180) return null;
-                                return <rect key={`${row}-${col}`} x={x} y={y} width="6" height="6" fill="black"/>;
-                              })
-                            )}
-                          </svg>
+                        {/* 🌟 QR Code ของจริง */}
+                        <div className="w-48 h-48 bg-white relative mx-auto mb-4 p-2 flex items-center justify-center">
+                          <img 
+                            // 🔴 ให้เปลี่ยน 0812345678 เป็นเบอร์โทรศัพท์ หรือ เลขบัตรประชาชนที่ผูกพร้อมเพย์ของคุณ
+                            src={`https://promptpay.io/0983813674/${total}.png`} 
+                            alt="QR Code PromptPay" 
+                            className="w-full h-full object-contain"
+                          />
                         </div>
                         <div className="flex items-center justify-center gap-2 mb-2">
                           <img src="data:image/svg+xml,%3Csvg viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='40' height='40' rx='8' fill='%231a4d8f'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-size='14' font-weight='bold'%3EPP%3C/text%3E%3C/svg%3E" className="w-6 h-6" alt="PromptPay" />

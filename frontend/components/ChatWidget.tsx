@@ -93,7 +93,9 @@ export default function ChatWidget() {
     // ดักจับเมื่อมีการเปลี่ยน session ในแท็บอื่น
     window.addEventListener('storage', getOrInitChatSession);
     return () => window.removeEventListener('storage', getOrInitChatSession);
-  }, []);
+    
+  // 🌟🌟🌟 แก้ไขตรงนี้: เพิ่ม pathname เข้าไปในวงเล็บ เพื่อให้ระบบเช็คชื่อผู้ใช้ใหม่ทุกครั้งที่เปลี่ยนหน้า
+  }, [pathname]);
 
 
 

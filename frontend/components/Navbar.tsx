@@ -21,7 +21,6 @@ export default function Navbar() {
     setUser(null);
     router.push('/login');
   };
-
   if (pathname === '/login' || pathname === '/register') return null;
 
   return (

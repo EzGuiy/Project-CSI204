@@ -14,21 +14,22 @@ interface OrderData {
   status: string;
   carrier: string | null;
   trackingNumber: string | null;
+  shipping: { fullName: string; address: string; subDistrict: string; district: string; province: string; postalCode: string; phone: string; };
+  shippingFee: number;
   statusHistory?: { status: string; label: string; date: string; note: string }[];
 }
 
 const steps = [
-  { status: 'confirmed', label: 'ยืนยันสั่งซื้อ', icon: '📝', desc: 'ชำระเงินสำเร็จ ระบบยืนยันคำสั่งซื้อ' },
-  { status: 'processing', label: 'กำลังเตรียมสินค้า', icon: '📦', desc: 'คลังสินค้ากำลังแพ็คและจัดเตรียมสินค้า' },
-  { status: 'shipped', label: 'จัดส่งแล้ว', icon: '🚚', desc: 'ส่งมอบให้บริษัทจัดส่งสำเร็จ' },
-  { status: 'delivered', label: 'จัดส่งสำเร็จ', icon: '🏠', desc: 'สินค้าจัดส่งถึงที่หมายเรียบร้อยแล้ว' },
+  { status: 'confirmed', label: 'รับคำสั่งซื้อ', icon: '📝', desc: 'ระบบได้รับคำสั่งซื้อและกำลังตรวจสอบ' },
+  { status: 'processing', label: 'กำลังดำเนินการ', icon: '⚙️', desc: 'กำลังจัดเตรียมสินค้าเพื่อจัดส่ง' },
+  { status: 'shipped', label: 'กำลังจัดส่ง', icon: '🚚', desc: 'สินค้าถูกมอบให้บริษัทขนส่งแล้ว' },
+  { status: 'delivered', label: 'จัดส่งสำเร็จ', icon: '✅', desc: 'พัสดุจัดส่งถึงมือผู้รับเรียบร้อยแล้ว' },
 ];
 
 export default function CheckoutSuccessPage() {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [showConfetti, setShowConfetti] = useState(true);
 
-  // 1. ดึงข้อมูลสั่งซื้อเมื่อเปิดหน้าจอ
   useEffect(() => {
     const orderId = sessionStorage.getItem('last_order_id');
     if (orderId) {
@@ -36,112 +37,131 @@ export default function CheckoutSuccessPage() {
       const found = orders.find((o: OrderData) => o.id === orderId);
       if (found) setOrder(found);
     }
-    // หยุด confetti หลัง 4 วินาที
     const timer = setTimeout(() => setShowConfetti(false), 4000);
     return () => clearTimeout(timer);
   }, []);
 
-  // 2. จำลองการเปลี่ยนสถานะโดยอัตโนมัติ (Automated State Simulation) ทุกๆ 5 วินาที
-  useEffect(() => {
+  // 🖨️ ฟังก์ชันสำหรับพิมพ์ใบเสร็จ / ใบสั่งซื้อ
+  const handlePrintReceipt = () => {
     if (!order) return;
-    if (order.status === 'delivered') return;
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('กรุณาอนุญาตให้เบราว์เซอร์เปิด Pop-up เพื่อพิมพ์ใบเสร็จ');
+      return;
+    }
 
-    const statusOrder = ['confirmed', 'processing', 'shipped', 'delivered'];
-    const currentIdx = statusOrder.indexOf(order.status);
-    if (currentIdx === -1 || currentIdx === statusOrder.length - 1) return;
+    const html = `
+      <!DOCTYPE html>
+      <html lang="th">
+      <head>
+        <meta charset="UTF-8">
+        <title>ใบสั่งซื้อ/ใบเสร็จรับเงิน - ${order.id}</title>
+        <style>
+          body { font-family: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; line-height: 1.5; max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #1e3a8a; padding-bottom: 20px; }
+          .header h1 { color: #1e3a8a; margin: 0 0 5px 0; font-size: 32px; }
+          .header p { margin: 0; color: #666; }
+          .info-section { display: flex; justify-content: space-between; margin-bottom: 30px; }
+          .info-box { width: 48%; }
+          .info-box h3 { border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px; color: #1e3a8a; font-size: 16px; }
+          .info-box p { margin: 5px 0; font-size: 14px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 14px; }
+          th { background-color: #f8fafc; color: #333; font-weight: bold; }
+          td.right, th.right { text-align: right; }
+          .summary { width: 50%; float: right; margin-bottom: 50px; }
+          .summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 14px; }
+          .summary-row.total { font-weight: bold; font-size: 18px; color: #1e3a8a; border-bottom: 2px solid #1e3a8a; border-top: 2px solid #1e3a8a; padding: 12px 0; }
+          .footer { clear: both; text-align: center; color: #888; font-size: 12px; border-top: 1px solid #ddd; padding-top: 20px; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>SolarTech Energy</h1>
+          <p>ใบสั่งซื้อ / ใบเสร็จรับเงิน (Purchase Order / Receipt)</p>
+        </div>
+        
+        <div class="info-section">
+          <div class="info-box">
+            <h3>ข้อมูลลูกค้า (Customer Info)</h3>
+            <p><strong>ชื่อ-นามสกุล:</strong> ${order.shipping.fullName}</p>
+            <p><strong>เบอร์โทรศัพท์:</strong> ${order.shipping.phone}</p>
+            <p><strong>ที่อยู่จัดส่ง:</strong> ${order.shipping.address}, ต.${order.shipping.subDistrict} อ.${order.shipping.district} จ.${order.shipping.province} ${order.shipping.postalCode}</p>
+          </div>
+          <div class="info-box">
+            <h3>ข้อมูลคำสั่งซื้อ (Order Info)</h3>
+            <p><strong>รหัสคำสั่งซื้อ:</strong> ${order.id}</p>
+            <p><strong>วันที่สั่งซื้อ:</strong> ${new Date(order.date).toLocaleString('th-TH')}</p>
+            <p><strong>วิธีชำระเงิน:</strong> ${order.paymentMethod === 'credit_card' ? 'บัตรเครดิต/เดบิต' : 'โอนผ่านธนาคาร (PromptPay)'}</p>
+            <p><strong>สถานะ:</strong> ชำระเงินเรียบร้อย</p>
+          </div>
+        </div>
 
-    const timer = setTimeout(() => {
-      const nextStatus = statusOrder[currentIdx + 1];
-      const updatedHistory = [...(order.statusHistory || [])];
-      
-      let label = '';
-      let note = '';
-      let carrier = order.carrier;
-      let trackingNumber = order.trackingNumber;
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 5%;">ลำดับ</th>
+              <th style="width: 50%;">รายการสินค้า (Description)</th>
+              <th style="width: 15%; text-align: center;">จำนวน (Qty)</th>
+              <th class="right" style="width: 15%;">ราคา/หน่วย (Unit Price)</th>
+              <th class="right" style="width: 15%;">ยอดรวม (Amount)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${order.items.map((item, index) => `
+              <tr>
+                <td style="text-align: center;">${index + 1}</td>
+                <td>${item.name}</td>
+                <td style="text-align: center;">${item.quantity}</td>
+                <td class="right">฿${item.price.toLocaleString()}</td>
+                <td class="right">฿${(item.price * item.quantity).toLocaleString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
 
-      if (nextStatus === 'processing') {
-        label = 'กำลังเตรียมสินค้า';
-        note = 'คลังสินค้ากำลังจัดแยกและแพ็คบรรจุกล่องพัสดุ';
-      } else if (nextStatus === 'shipped') {
-        label = 'จัดส่งแล้ว';
-        note = 'สินค้าจัดส่งออกจากคลังผ่าน Flash Express';
-        carrier = 'Flash Express';
-        trackingNumber = `FL-SOLAR-${Math.floor(100000000 + Math.random() * 900000000)}`;
-      } else if (nextStatus === 'delivered') {
-        label = 'จัดส่งสำเร็จ';
-        note = 'สินค้าส่งถึงจุดหมายปลายทางและลงชื่อรับเรียบร้อยแล้ว';
-      }
+        <div class="summary">
+          <div class="summary-row">
+            <span>มูลค่าสินค้ารวม (Subtotal):</span>
+            <span>฿${(order.total - order.shippingFee).toLocaleString()}</span>
+          </div>
+          <div class="summary-row">
+            <span>ค่าจัดส่ง (Shipping Fee):</span>
+            <span>${order.shippingFee === 0 ? 'ฟรี' : '฿' + order.shippingFee.toLocaleString()}</span>
+          </div>
+          <div class="summary-row total">
+            <span>ยอดชำระสุทธิ (Grand Total):</span>
+            <span>฿${order.total.toLocaleString()}</span>
+          </div>
+        </div>
 
-      // สร้างบันทึกความคืบหน้าของสถานะใหม่
-      const historyItem = {
-        status: nextStatus,
-        label,
-        date: new Date().toISOString(), // อัปเดตเวลาเป็นเวลาปัจจุบัน ณ ตอนที่ขยับสเต็ป
-        note,
-      };
+        <div class="footer">
+          <p>เอกสารฉบับนี้ถูกสร้างขึ้นโดยระบบอัตโนมัติของ SolarTech | ขอบคุณที่ไว้วางใจใช้บริการของเรา</p>
+          <p>หากมีข้อสงสัยเกี่ยวกับคำสั่งซื้อ โปรดติดต่อแผนกบริการลูกค้า</p>
+        </div>
 
-      const existingIdx = updatedHistory.findIndex(h => h.status === nextStatus);
-      if (existingIdx > -1) {
-        updatedHistory[existingIdx] = historyItem;
-      } else {
-        updatedHistory.push(historyItem);
-      }
-
-      // เติมเต็มสเต็ปก่อนหน้านี้เพื่อป้องกันข้อมูลไม่สอดคล้อง
-      for (let i = 0; i <= currentIdx + 1; i++) {
-        const checkStatus = statusOrder[i];
-        if (!updatedHistory.some(h => h.status === checkStatus)) {
-          let prevLabel = '';
-          let prevNote = '';
-          if (checkStatus === 'processing') {
-            prevLabel = 'กำลังเตรียมสินค้า';
-            prevNote = 'คลังสินค้ากำลังจัดแยกและแพ็คบรรจุกล่องพัสดุ';
-          } else if (checkStatus === 'shipped') {
-            prevLabel = 'จัดส่งแล้ว';
-            prevNote = 'สินค้าจัดส่งออกจากคลังผ่าน Flash Express';
-            carrier = 'Flash Express';
-            trackingNumber = `FL-SOLAR-${Math.floor(100000000 + Math.random() * 900000000)}`;
+        <script>
+          window.onload = function() { 
+            setTimeout(() => {
+              window.print(); 
+              window.close();
+            }, 500);
           }
-          updatedHistory.push({
-            status: checkStatus,
-            label: prevLabel,
-            date: new Date().toISOString(),
-            note: prevNote
-          });
-        }
-      }
+        </script>
+      </body>
+      </html>
+    `;
 
-      // เรียงลำดับประวัติตามสเต็ป
-      updatedHistory.sort((a, b) => statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status));
-
-      const updatedOrder = {
-        ...order,
-        status: nextStatus,
-        carrier,
-        trackingNumber,
-        statusHistory: updatedHistory,
-      };
-
-      // บันทึกคำสั่งซื้อใหม่ในฐานข้อมูล LocalStorage
-      const savedOrders = JSON.parse(localStorage.getItem('solar_orders') || '[]');
-      const idx = savedOrders.findIndex((o: any) => o.id === order.id);
-      if (idx > -1) {
-        savedOrders[idx] = updatedOrder;
-        localStorage.setItem('solar_orders', JSON.stringify(savedOrders));
-      }
-
-      // เปลี่ยนค่า State เพื่อแสดงผลทันทีและกระตุ้นการทำงานในสเต็ปถัดไป
-      setOrder(updatedOrder);
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [order]);
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
 
   const currentStepIdx = order ? steps.findIndex(s => s.status === order.status) : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center py-12 px-4 relative overflow-hidden">
-
       {/* Confetti Animation */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50">
@@ -164,7 +184,6 @@ export default function CheckoutSuccessPage() {
       <div className="max-w-lg w-full">
         {/* Success Card */}
         <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-
           {/* Green Header */}
           <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 px-8 py-10 text-center relative overflow-hidden">
             <div className="absolute inset-0 opacity-10">
@@ -179,8 +198,8 @@ export default function CheckoutSuccessPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" style={{ animation: 'checkDraw 0.6s ease-out 0.3s both' }} />
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-white mb-2">สั่งซื้อสำเร็จ!</h1>
-              <p className="text-emerald-100 text-sm">ขอบคุณที่ไว้วางใจ SolarTech</p>
+              <h1 className="text-2xl font-bold text-white mb-2">ชำระเงินสำเร็จ!</h1>
+              <p className="text-emerald-100 text-sm">ระบบได้รับคำสั่งซื้อของคุณแล้ว ขอขอบคุณที่ไว้วางใจ SolarTech</p>
             </div>
           </div>
 
@@ -188,180 +207,63 @@ export default function CheckoutSuccessPage() {
           <div className="px-8 py-8">
             {order ? (
               <>
-                {/* Order ID */}
                 <div className="text-center mb-6 pb-6 border-b border-slate-100">
                   <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">หมายเลขคำสั่งซื้อ</p>
                   <p className="text-lg font-bold text-slate-900 font-mono tracking-wider">{order.id}</p>
                 </div>
 
-                {/* Summary Grid */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
-                    <p className="text-xs text-slate-400 mb-1">ยอดชำระ</p>
+                    <p className="text-xs text-slate-400 mb-1">ยอดชำระสุทธิ</p>
                     <p className="text-lg font-bold text-blue-600">฿{order.total.toLocaleString()}</p>
                   </div>
                   <div className="bg-slate-50 rounded-xl p-4 text-center border border-slate-100">
-                    <p className="text-xs text-slate-400 mb-1">ชำระผ่าน</p>
+                    <p className="text-xs text-slate-400 mb-1">ช่องทางชำระเงิน</p>
                     <p className="text-sm font-bold text-slate-800">
-                      {order.paymentMethod === 'credit_card' ? (
-                        <span className="flex items-center justify-center gap-1">
-                          💳 •••• {order.cardLast4}
-                        </span>
-                      ) : (
-                        <span className="flex items-center justify-center gap-1">
-                          🏦 QR PromptPay
-                        </span>
-                      )}
+                      {order.paymentMethod === 'credit_card' ? `บัตรเครดิต (*${order.cardLast4})` : 'QR PromptPay'}
                     </p>
                   </div>
                 </div>
 
-                {/* Items */}
-                <div className="mb-6">
-                  <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">รายการสินค้า</p>
-                  <div className="space-y-2.5">
-                    {order.items.map(item => (
-                      <div key={item.id} className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                        <div className="w-10 h-10 bg-white rounded-md border border-slate-200 flex items-center justify-center p-1 shrink-0">
-                          <img src={item.icon} alt={item.name} className="w-full h-full object-contain" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-800 truncate">{item.name}</p>
-                          <p className="text-xs text-slate-400">x{item.quantity}</p>
-                        </div>
-                        <p className="text-sm font-bold text-slate-700 shrink-0">฿{(item.price * item.quantity).toLocaleString()}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Date */}
-                <div className="text-center text-xs text-slate-400 mb-6 pb-6 border-b border-slate-100">
-                  วันที่สั่งซื้อ: {new Date(order.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                </div>
-
-                {/* =========================================
-                    Order Tracking Stepper
-                ========================================= */}
-                <div className="mb-8 bg-slate-50/50 rounded-2xl p-5 border border-slate-100">
-                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-5 flex items-center gap-2">
-                    <span className="text-blue-500 text-lg">🚚</span> ติดตามสถานะการจัดส่ง
-                  </h3>
-                  <div className="space-y-6 relative">
-                    {steps.map((step, idx) => {
-                      const isCompleted = idx <= currentStepIdx;
-                      const isActive = idx === currentStepIdx;
-                      const isLast = idx === steps.length - 1;
-                      const history = order.statusHistory?.find(h => h.status === step.status);
-
-                      return (
-                        <div key={step.status} className="flex gap-4 relative">
-                          {/* Connector line */}
-                          {!isLast && (
-                            <div className={`absolute left-5 top-10 bottom-[-16px] w-[2px] transition-colors duration-500 ${idx < currentStepIdx ? 'bg-emerald-500' : 'bg-slate-200'}`} />
-                          )}
-                          
-                          {/* Icon Circle */}
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg z-10 border-2 transition-all duration-500 ${
-                            isActive 
-                              ? 'bg-blue-600 border-blue-600 text-white ring-4 ring-blue-100 scale-110' 
-                              : isCompleted 
-                                ? 'bg-emerald-500 border-emerald-500 text-white' 
-                                : 'bg-white border-slate-200 text-slate-400'
-                          }`}>
-                            {step.icon}
-                          </div>
-
-                          {/* Step Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className={`text-sm font-bold transition-colors ${isActive ? 'text-blue-600' : isCompleted ? 'text-slate-800' : 'text-slate-400'}`}>{step.label}</p>
-                              {history && (
-                                <span className="text-[10px] text-slate-400 font-mono shrink-0">
-                                  {new Date(history.date).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              )}
-                            </div>
-                            <p className={`text-xs mt-0.5 transition-colors leading-relaxed ${isActive ? 'text-slate-600' : isCompleted ? 'text-slate-500' : 'text-slate-400'}`}>
-                              {history ? history.note : step.desc}
-                            </p>
-
-                            {/* Info Box inside Shipped Step */}
-                            {step.status === 'shipped' && isCompleted && order.carrier && order.trackingNumber && (
-                              <div className="mt-2.5 bg-white p-3 rounded-xl border border-slate-100 flex items-center justify-between text-xs shadow-sm animate-fadeIn">
-                                <div>
-                                  <p className="text-slate-500 font-medium">บริษัทขนส่ง: <span className="text-slate-800 font-bold">{order.carrier}</span></p>
-                                  <p className="text-slate-500 mt-0.5">เลขพัสดุ: <span className="text-slate-900 font-mono font-bold tracking-wider">{order.trackingNumber}</span></p>
-                                </div>
-                                <button 
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(order.trackingNumber || '');
-                                    alert('📋 คัดลอกรหัสพัสดุเรียบร้อยแล้ว!');
-                                  }}
-                                  className="bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-800 border border-slate-200 px-2.5 py-1.5 rounded-lg font-bold shadow-sm transition-all"
-                                >
-                                  คัดลอก
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                {/* Action Buttons */}
+                <div className="space-y-3 mt-8">
+                  {/* 🖨️ เพิ่มปุ่มพิมพ์ใบสั่งซื้อตรงนี้ */}
+                  <button
+                    onClick={handlePrintReceipt}
+                    className="block w-full bg-slate-900 hover:bg-slate-800 text-white text-center font-bold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                    พิมพ์ใบเสร็จ / ใบสั่งซื้อ
+                  </button>
+                  
+                  <Link
+                    href="/orders"
+                    className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-600/20"
+                  >
+                    ติดตามสถานะคำสั่งซื้อ
+                  </Link>
+                  <Link
+                    href="/"
+                    className="block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-center font-bold py-3.5 rounded-xl transition-all"
+                  >
+                    กลับสู่หน้าแรก
+                  </Link>
                 </div>
               </>
             ) : (
               <div className="text-center py-6">
-                <p className="text-slate-500 mb-2">🎉 คำสั่งซื้อของคุณถูกบันทึกเรียบร้อยแล้ว</p>
-                <p className="text-sm text-slate-400">คุณสามารถตรวจสอบรายละเอียดได้ที่หน้าประวัติคำสั่งซื้อ</p>
+                <p className="text-slate-500">กำลังประมวลผลข้อมูล...</p>
               </div>
             )}
-
-            {/* Action Buttons */}
-            <div className="space-y-3">
-              <Link
-                href="/orders"
-                className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-600/20"
-              >
-                📋 ดูประวัติคำสั่งซื้อ
-              </Link>
-              <Link
-                href="/"
-                className="block w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-center font-bold py-3.5 rounded-xl transition-all"
-              >
-                กลับหน้าหลัก
-              </Link>
-            </div>
           </div>
         </div>
       </div>
 
       {/* CSS Animations */}
       <style jsx>{`
-        @keyframes confettiFall {
-          0% {
-            transform: translateY(-10px) rotate(0deg);
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(100vh) rotate(720deg);
-            opacity: 0;
-          }
-        }
-        @keyframes successPop {
-          0% { transform: scale(0); opacity: 0; }
-          50% { transform: scale(1.2); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes checkDraw {
-          0% { stroke-dasharray: 0 100; opacity: 0; }
-          100% { stroke-dasharray: 100 0; opacity: 1; }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(5px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes confettiFall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+        @keyframes successPop { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes checkDraw { 0% { stroke-dasharray: 0 100; opacity: 0; } 100% { stroke-dasharray: 100 0; opacity: 1; } }
       `}</style>
     </div>
   );
