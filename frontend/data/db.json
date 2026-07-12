@@ -15,6 +15,14 @@
       "password": "password123",
       "role": "employee",
       "name": "พนักงาน ประจำร้าน"
+    },
+    {
+      "id": "u3",
+      "username": "customer01",
+      "email": "customer@test.com",
+      "password": "123",
+      "role": "customer",
+      "name": "คุณลูกค้า สมชาย"
     }
   ],
   "products": [
@@ -23,7 +31,7 @@
       "name": "Jinko Solar Tiger Pro 550W",
       "category": "บ้านพักอาศัย",
       "price": 4500,
-      "stock": 15,
+      "stock": 1,
       "image": "/Jiinko_550w.jpg"
     },
     {
@@ -33,6 +41,14 @@
       "price": 28500,
       "stock": 5,
       "image": "/file.svg"
+    },
+    {
+      "id": "u3",
+      "username": "customer01",
+      "email": "customer@test.com",
+      "password": "1234",
+      "role": "customer",
+      "name": "คุณลูกค้า สมชาย"
     }
   ],
   "orders": [],

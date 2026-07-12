@@ -86,7 +86,7 @@ export default function ProductsPage() {
                   </h3>
                   <div className="flex justify-between items-center mt-4">
                     <span className="font-bold text-lg text-zinc-900">
-                      ฿{product.price.toLocaleString()}
+                      ฿{(product.price || 0).toLocaleString()}
                     </span>
                     <Link 
                       href={`/products/${product.id}`}
