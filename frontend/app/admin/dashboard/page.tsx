@@ -1,337 +1,302 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-interface User { id: string; name: string; email: string; role: string; }
-interface Product { id: string; name: string; category: string; price: number; stock: number; }
-interface ChatProduct { id: string; name: string; category: string; price: number; capacity: string; imageUrl: string; }
-interface Message { id: string; chatId: string; senderName: string; sender: 'user' | 'agent'; text?: string; image?: string; product?: ChatProduct; timestamp: string; isRead: boolean; }
-interface ChatSession { id: string; name: string; lastMessage: string; time: string; unread: number; messages: Message[]; }
+interface Product { id: string; name: string; category: string; price: number; stock: number; image?: string; description?: string; }
+interface Order { id: string; date: string; total: number; status: string; shipping: { fullName: string; }; }
+// 🌟 เปลี่ยนจาก 'user' เป็น 'customer' ให้ตรงกับ db.json
+interface User { id: string; username: string; name: string; role: 'customer' | 'employee' | 'admin'; }
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminName, setAdminName] = useState('');
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'inventory' | 'orders'>('overview');
   
-  const [users, setUsers] = useState<User[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [chats, setChats] = useState<ChatSession[]>([]);
-  const [selectedChatId, setSelectedChatId] = useState<string>('');
-  const [replyText, setReplyText] = useState('');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'products' | 'chats' | 'settings'>('overview');
+  // States สำหรับจัดการสินค้า
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newProduct, setNewProduct] = useState({ name: '', category: 'บ้านพักอาศัย (Residential)', price: 0, stock: 0, image: '', description: '' });
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
+  // 🔐 ตรวจสอบสิทธิ์การเข้าถึง (ต้องเป็น admin เท่านั้น)
   useEffect(() => {
-    // 🔐 เปลี่ยนมาใช้คีย์ 'user' ที่เราตั้งไว้ในระบบ Login ใหม่
-    const session = localStorage.getItem('user');
+    const session = localStorage.getItem('solar_session');
     if (!session) {
       router.push('/login');
       return;
     }
-
     const userData = JSON.parse(session);
     if (userData.role !== 'admin') {
-      alert('❌ Access Denied: บัญชีของคุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+      alert('❌ คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
       router.push('/');
     } else {
       setIsAdmin(true);
-      setAdminName(userData.name || 'Admin');
-      loadUsers();
-      loadProducts();
+      setAdminName(userData.name);
+      loadDashboardData();
     }
   }, [router]);
 
-  const loadUsers = () => {
-    fetch('/api/users')
-      .then(async (res) => {
-        if (res.ok) {
-          const dbUsers = await res.json();
-          setUsers(dbUsers);
-        }
-      })
-      .catch((e) => console.error(e));
-  };
-
-  // 📦 ดึงข้อมูลสินค้าจาก API แทน LocalStorage
-  const loadProducts = async () => {
+  // 📦 ดึงข้อมูลทั้งหมด
+  const loadDashboardData = async () => {
     try {
-      const res = await fetch('/api/products');
-      if (res.ok) {
-        const data = await res.json();
-        setProducts(data);
+      const [resProducts, resOrders, resUsers] = await Promise.all([
+        fetch('/api/products'),
+        fetch('/api/orders'),
+        fetch('/api/users') // 🌟 ดึงข้อมูล Users จาก API
+      ]);
+      
+      if (resProducts.ok) setProducts(await resProducts.json());
+      if (resOrders.ok) {
+        const data = await resOrders.json();
+        const sorted = data.sort((a: Order, b: Order) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setOrders(sorted);
+      }
+      
+      // 🌟 นำข้อมูลจริงมาแสดง
+      if (resUsers.ok) {
+        setUsers(await resUsers.json());
+      } else {
+        // ข้อมูลจำลองกรณีที่ API ยังไม่พร้อม (เปลี่ยน role เป็น customer)
+        setUsers([
+          { id: 'u1', username: 'admin', name: 'วิศวกร สมศักดิ์', role: 'admin' },
+          { id: 'u2', username: 'emp01', name: 'พนักงาน ประจำร้าน', role: 'employee' },
+          { id: 'u3', username: 'customer1', name: 'คุณลูกค้า สมชาย', role: 'customer' },
+          { id: 'u4', username: 'customer2', name: 'คุณลูกค้า สมหญิง', role: 'customer' },
+        ]);
       }
     } catch (error) {
-      console.error('Error loading products:', error);
+      console.error('Error loading data', error);
     }
   };
 
-  const handleDeleteUser = (userId: string, userName: string) => {
-    if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีของ "${userName}"?`)) {
-      fetch(`/api/users?id=${userId}`, { method: 'DELETE' })
-        .then(async (res) => {
-          if (!res.ok) throw new Error('ลบผู้ใช้ไม่สำเร็จ');
-          alert('🗑️ ลบบัญชีผู้ใช้งานสำเร็จ');
-          loadUsers();
-        })
-        .catch((err) => alert(`❌ ไม่สามารถลบผู้ใช้งานได้: ${err.message || ''}`));
-    }
-  };
-
-  // 🗑️ ลบสินค้าโดยยิง API ไปบอกให้ลบใน db.json
-  const handleDeleteProduct = async (productId: string, productName: string) => {
-    if (window.confirm(`🗑️ ยืนยันการลบสินค้า "${productName}" ออกจากระบบ?`)) {
+  // ==========================================
+  // ฟังก์ชันจัดการ User, สินค้า และ ออเดอร์
+  // ==========================================
+  // 👥 เปลี่ยนสิทธิ์ผู้ใช้งาน (Role Management)
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    if (confirm(`ยืนยันการปรับสิทธิ์ผู้ใช้งานนี้เป็น "${newRole.toUpperCase()}" ใช่หรือไม่?`)) {
+      // อัปเดตหน้าจอทันทีเพื่อความรวดเร็ว
+      setUsers(users.map(u => u.id === userId ? { ...u, role: newRole as any } : u));
+      
       try {
-        const res = await fetch(`/api/products?id=${productId}`, { method: 'DELETE' });
+        // 🌟 ส่งข้อมูลไปเซฟลง db.json ผ่าน API
+        const res = await fetch('/api/users', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: userId, role: newRole })
+        });
+        
         if (res.ok) {
-          // ถ้า API ลบสำเร็จ ให้โหลดข้อมูลสินค้ามาวาดบนหน้าจอใหม่
-          loadProducts(); 
+          alert('อัปเดตสิทธิ์ผู้ใช้งานลงฐานข้อมูลสำเร็จ!');
         }
       } catch (error) {
-        console.error('Failed to delete product', error);
+        console.error('Error updating role:', error);
       }
     }
-  };
-
-  // (ฟังก์ชัน Chat และ UI ด้านล่างคงเดิมตามที่คุณเขียนไว้)
-  const fetchChatsFromAPI = async (): Promise<ChatSession[]> => {
-    let allChats: Message[] = [];
-    try {
-      const res = await fetch('/api/chats');
-      if (res.ok) {
-        allChats = await res.json();
-      }
-    } catch (e) {
-      console.error(e);
-    }
-
-    const sessionsMap: { [chatId: string]: Message[] } = {};
-    allChats.forEach(msg => {
-      if (!sessionsMap[msg.chatId]) {
-        sessionsMap[msg.chatId] = [];
-      }
-      sessionsMap[msg.chatId].push(msg);
-    });
-
-    const chatSessions: ChatSession[] = Object.keys(sessionsMap).map(cId => {
-      const msgs = sessionsMap[cId];
-      const userMsg = [...msgs].reverse().find(m => m.sender === 'user');
-      const senderName = userMsg ? userMsg.senderName : (msgs[0]?.senderName || `ลูกค้า (${cId})`);
-      
-      const lastMsgObj = msgs[msgs.length - 1];
-      let lastMsgText = '';
-      if (lastMsgObj.text) {
-        lastMsgText = lastMsgObj.text;
-      } else if (lastMsgObj.image) {
-        lastMsgText = '[ส่งรูปถ่าย]';
-      } else if (lastMsgObj.product) {
-        lastMsgText = `[แนบสินค้า: ${lastMsgObj.product.name}]`;
-      }
-
-      const unreadCount = msgs.filter(m => m.sender === 'user' && !m.isRead).length;
-
-      return {
-        id: cId,
-        name: senderName,
-        lastMessage: lastMsgText,
-        time: lastMsgObj.timestamp,
-        unread: unreadCount,
-        messages: msgs
-      };
-    });
-
-    return chatSessions;
-  };
-
-  const markAsRead = async (cId: string) => {
-    try {
-      await fetch('/api/chats', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ chatId: cId }),
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  useEffect(() => {
-    const refreshChats = async () => {
-      if (selectedChatId) {
-        await markAsRead(selectedChatId);
-      }
-      const loaded = await fetchChatsFromAPI();
-      setChats(loaded);
-    };
-
-    refreshChats();
-    const interval = setInterval(() => { refreshChats(); }, 3000);
-    return () => clearInterval(interval);
-  }, [selectedChatId]);
-
-  useEffect(() => {
-    if (chats.length > 0 && !selectedChatId) {
-      setSelectedChatId(chats[0].id);
-    }
-  }, [chats, selectedChatId]);
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [chats, selectedChatId, activeTab]);
-
-  const handleSendReply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!replyText.trim() || !selectedChatId) return;
-
-    const newReplyMsg: Message = {
-      id: `msg-${Date.now()}-agent`,
-      chatId: selectedChatId,
-      senderName: adminName,
-      sender: 'agent',
-      text: replyText.trim(),
-      timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-      isRead: true,
-    };
-
-    try {
-      await fetch('/api/chats', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newReplyMsg),
-      });
-    } catch (e) {
-      console.error(e);
-    }
-
-    setReplyText('');
-    const loaded = await fetchChatsFromAPI();
-    setChats(loaded);
-  };
-
-  const selectedChat = chats.find(c => c.id === selectedChatId) || null;
-  const totalUnreadCount = chats.reduce((acc, c) => acc + c.unread, 0);
-
-  if (!isAdmin) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-600 font-medium">กำลังตรวจสอบสิทธิ์แอดมิน...</div>;
   }
 
+  const updateStock = async (id: string, amount: number) => {
+    const updated = products.map(p => p.id === id ? { ...p, stock: Math.max(0, p.stock + amount) } : p);
+    setProducts(updated);
+    try {
+      await fetch('/api/products', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, amount }) });
+    } catch (error) { console.error('Error updating stock', error); }
+  };
+
+  const handleDeleteProduct = async (id: string, name: string) => {
+    if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบสินค้า "${name}"?`)) {
+      try {
+        const res = await fetch(`/api/products?id=${id}`, { method: 'DELETE' });
+        if (res.ok) loadDashboardData();
+      } catch (error) { console.error('Error deleting product', error); }
+    }
+  };
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newProduct) });
+      if (res.ok) {
+        alert('เพิ่มสินค้าสำเร็จ');
+        setShowAddModal(false);
+        setNewProduct({ name: '', category: 'บ้านพักอาศัย (Residential)', price: 0, stock: 0, image: '', description: '' });
+        loadDashboardData();
+      }
+    } catch (error) { console.error('Error adding product', error); }
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    try {
+      const res = await fetch('/api/products', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editingProduct) });
+      if (res.ok) {
+        alert('บันทึกการแก้ไขสินค้าสำเร็จ');
+        setShowEditModal(false);
+        setEditingProduct(null);
+        loadDashboardData();
+      }
+    } catch (error) { console.error('Error editing product', error); }
+  };
+
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+    if (confirm(`ยืนยันการเปลี่ยนสถานะเป็น "${newStatus}" ใช่หรือไม่?`)) {
+      try {
+        const res = await fetch('/api/orders', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId, status: newStatus }) });
+        if (res.ok) loadDashboardData();
+      } catch (error) { console.error('Error updating order', error); }
+    } else {
+      loadDashboardData(); 
+    }
+  };
+
+  if (!isAdmin) return null;
+
+  // 📊 คำนวณสถิติยอดขาย
+  const currentYear = new Date().getFullYear();
+  const successfulOrders = orders.filter(o => o.status === 'จัดส่งสำเร็จ' || o.status === 'delivered');
+  const totalRevenue = successfulOrders.reduce((sum, o) => sum + o.total, 0);
+  const totalOrders = successfulOrders.length;
+  const pendingOrders = orders.filter(o => o.status === 'รอชำระเงิน' || o.status === 'ตรวจสอบ' || o.status === 'processing').length;
+
+  const monthlySales = Array(12).fill(0);
+  successfulOrders.forEach(order => {
+    const d = new Date(order.date);
+    if (d.getFullYear() === currentYear) monthlySales[d.getMonth()] += order.total;
+  });
+  const maxMonthlySale = Math.max(...monthlySales) || 1;
+
   return (
-    <div className="min-h-screen flex bg-slate-100 text-slate-800">
-      <aside className="w-64 bg-slate-950 text-white flex flex-col shadow-xl z-10">
-        <div className="p-6 flex items-center gap-3 border-b border-slate-800">
-          <span className="text-2xl">🛡️</span>
-          <h1 className="text-xl font-bold tracking-wide">Admin Control</h1>
+    <div className="min-h-screen bg-slate-100 flex flex-col md:flex-row font-sans">
+      
+      {/* ⬅️ Sidebar */}
+      <aside className="w-full md:w-64 bg-indigo-950 text-white flex flex-col shrink-0 z-10 shadow-xl">
+        <div className="p-6 border-b border-indigo-900/50">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Admin</span>
+          </div>
+          <h2 className="text-xl font-bold tracking-wide">Management Center</h2>
+          <p className="text-indigo-300 text-sm mt-1">ผู้ดูแลระบบ: {adminName}</p>
         </div>
-        
-        <nav className="flex-1 p-4 space-y-2 mt-4">
-          <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'overview' ? 'bg-blue-700 text-white font-semibold shadow-sm' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}><span>📊</span> ภาพรวมระบบ</button>
-          <button onClick={() => setActiveTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'users' ? 'bg-blue-700 text-white font-semibold shadow-sm' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}><span>👥</span> จัดการผู้ใช้งาน</button>
-          <button onClick={() => setActiveTab('products')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'products' ? 'bg-blue-700 text-white font-semibold shadow-sm' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}><span>📦</span> จัดการสินค้า</button>
-          <button onClick={() => setActiveTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeTab === 'settings' ? 'bg-blue-700 text-white font-semibold shadow-sm' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}><span>⚙️</span> ตั้งค่าระบบ Solar</button>
-          <button onClick={() => setActiveTab('chats')} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition ${activeTab === 'chats' ? 'bg-blue-700 text-white font-semibold shadow-sm' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}>
-            <span className="flex items-center gap-3"><span>💬</span> ตอบแชทลูกค้า</span>
-            {totalUnreadCount > 0 && <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">{totalUnreadCount}</span>}
+        <nav className="p-4 space-y-2 flex-grow">
+          <button onClick={() => setActiveTab('overview')} className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'overview' ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-900/50'}`}>
+            <span>📈</span> สถิติและยอดขาย
+          </button>
+          <button onClick={() => setActiveTab('users')} className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'users' ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-900/50'}`}>
+            <span>👥</span> จัดการสิทธิ์ผู้ใช้งาน
+          </button>
+          <div className="pt-4 pb-2">
+            <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider px-4">ระบบปฏิบัติการ</p>
+          </div>
+          <button onClick={() => setActiveTab('inventory')} className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'inventory' ? 'bg-slate-800 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-900/50'}`}>
+            <span>📦</span> จัดการสต๊อกสินค้า
+          </button>
+          <button onClick={() => setActiveTab('orders')} className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'orders' ? 'bg-slate-800 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-900/50'}`}>
+            <span>🚚</span> จัดการคำสั่งซื้อ
           </button>
         </nav>
+        <div className="p-4 border-t border-indigo-900/50">
+          <Link href="/" className="w-full bg-indigo-900 hover:bg-indigo-800 text-center block py-2.5 rounded-lg text-sm font-bold text-white transition-colors">
+            กลับหน้าร้านค้า
+          </Link>
+        </div>
       </aside>
 
-      <main className="flex-1 p-8 md:p-12 overflow-y-auto">
-        <header className="flex justify-between items-center mb-8 pb-4 border-b border-slate-200">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900">
-              {activeTab === 'overview' && 'แผงควบคุมระบบ SolarTech (Overview)'}
-              {activeTab === 'users' && 'จัดการผู้ใช้งานในระบบ'}
-              {activeTab === 'products' && 'จัดการคลังสินค้า (Inventory)'}
-              {activeTab === 'chats' && 'ระบบตอบแชทลูกค้า (Customer Support)'}
-              {activeTab === 'settings' && 'ตั้งค่าระบบ (Settings)'}
-            </h2>
-            <p className="text-slate-500 mt-1">ผู้ดูแลระบบ: <span className="text-blue-700 font-bold">{adminName}</span></p>
-          </div>
-        </header>
-
+      {/* ➡️ Main Content */}
+      <main className="flex-grow p-6 md:p-8 overflow-y-auto">
+        
+        {/* === แท็บ 1: ภาพรวม === */}
         {activeTab === 'overview' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
-                <div className="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-1">ผู้ใช้สมัครใหม่</div>
-                <div className="text-4xl font-black text-slate-900 tracking-tight">{users.length} <span className="text-sm font-normal text-slate-400">คน</span></div>
+          <div className="max-w-6xl mx-auto animate-in fade-in">
+            <h1 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <span className="text-3xl">📊</span> รายงานสถิติภาพรวมธุรกิจ ประจำปี {currentYear}
+            </h1>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-indigo-50 rounded-full z-0"></div>
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 relative z-10">รายได้สุทธิ (สะสม)</p>
+                <p className="text-3xl font-black text-indigo-700 relative z-10">฿{totalRevenue.toLocaleString()}</p>
               </div>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-blue-200/80 relative overflow-hidden">
-                <div className="absolute -right-4 -bottom-4 text-6xl opacity-10 grayscale">📦</div>
-                <div className="text-blue-600 text-sm font-bold uppercase tracking-wider mb-1">สินค้าที่วางขายอยู่</div>
-                <div className="text-4xl font-black text-slate-900 tracking-tight">{products.length} <span className="text-sm font-normal text-slate-400">รายการ</span></div>
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">คำสั่งซื้อสำเร็จ</p>
+                <p className="text-3xl font-black text-emerald-600">{totalOrders} <span className="text-sm font-medium text-slate-400">ออเดอร์</span></p>
               </div>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
-                <div className="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-1">บัญชีทดสอบในโค้ด</div>
-                <div className="text-4xl font-black text-slate-900 tracking-tight">3 <span className="text-sm font-normal text-slate-400">บัญชี</span></div>
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">ออเดอร์รอตรวจสอบ</p>
+                <p className="text-3xl font-black text-amber-500">{pendingOrders} <span className="text-sm font-medium text-slate-400">ออเดอร์</span></p>
               </div>
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
-                <div className="text-slate-400 text-sm font-semibold uppercase tracking-wider mb-1">สถานะระบบ</div>
-                <div className="text-xl font-bold text-emerald-600 mt-2 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>ออนไลน์
-                </div>
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">ผู้ใช้งานในระบบ</p>
+                <p className="text-3xl font-black text-blue-600">{users.length} <span className="text-sm font-medium text-slate-400">บัญชี</span></p>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm mb-8">
+              <h2 className="font-bold text-slate-800 mb-8 flex items-center gap-2">
+                <span>📈</span> กราฟยอดขายรายเดือน (Monthly Sales Revenue)
+              </h2>
+              <div className="h-64 flex items-end gap-2 md:gap-4 mt-10">
+                {['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'].map((month, index) => {
+                  const saleValue = monthlySales[index];
+                  const heightPercent = (saleValue / maxMonthlySale) * 100;
+                  return (
+                    <div key={month} className="flex-1 flex flex-col items-center group">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-[10px] py-1 px-2 rounded mb-2 whitespace-nowrap pointer-events-none">
+                        ฿{saleValue.toLocaleString()}
+                      </div>
+                      <div className="w-full max-w-[40px] bg-indigo-100 rounded-t-md relative flex justify-end flex-col overflow-hidden">
+                        <div className="w-full bg-indigo-600 rounded-t-md transition-all duration-1000 ease-out" style={{ height: `${heightPercent}%`, minHeight: saleValue > 0 ? '4px' : '0' }}></div>
+                      </div>
+                      <p className="text-[10px] md:text-xs text-slate-500 mt-3 font-medium">{month}</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         )}
 
+        {/* === แท็บ 2: จัดการ Users === */}
         {activeTab === 'users' && (
-           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-               <table className="w-full text-left border-collapse">
-                 <thead>
-                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold text-sm">
-                     <th className="p-4 pl-6">รหัสผู้ใช้</th><th className="p-4">ชื่อ-นามสกุล</th>
-                     <th className="p-4">อีเมล</th><th className="p-4">สิทธิ์ (Role)</th><th className="p-4 pr-6 text-center">จัดการ</th>
-                   </tr>
-                 </thead>
-                 <tbody>
-                   {users.map((user) => (
-                     <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50/80 text-sm">
-                       <td className="p-4 pl-6 font-mono text-xs text-slate-500">{user.id}</td>
-                       <td className="p-4 font-semibold text-slate-800">{user.name}</td>
-                       <td className="p-4 text-slate-600">{user.email}</td>
-                       <td className="p-4"><span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md text-xs uppercase">{user.role}</span></td>
-                       <td className="p-4 pr-6 text-center"><button onClick={() => handleDeleteUser(user.id, user.name)} className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all border border-red-200">ลบ</button></td>
-                     </tr>
-                   ))}
-                 </tbody>
-               </table>
-             </div>
-           </div>
-        )}
-
-        {activeTab === 'products' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-slate-600">รายการสินค้าทั้งหมดที่แสดงบนหน้าเว็บไซต์</p>
-              <button onClick={() => alert('ฟังก์ชัน "เพิ่มสินค้าใหม่" จะอัปเดตในเวอร์ชันถัดไป!')} className="bg-slate-900 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-colors flex items-center gap-2">
-                <span>➕</span> เพิ่มสินค้าใหม่
-              </button>
-            </div>
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="max-w-6xl mx-auto animate-in fade-in">
+            <h1 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2"><span className="text-3xl">👥</span> จัดการบัญชีและสิทธิ์ผู้ใช้งาน</h1>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><p className="text-sm text-slate-600">พนักงานและลูกค้าทั้งหมดในระบบ</p></div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold text-sm">
-                      <th className="p-4 pl-6">รหัสสินค้า</th><th className="p-4">ชื่อสินค้า</th><th className="p-4">หมวดหมู่</th>
-                      <th className="p-4 text-right">ราคา (บาท)</th><th className="p-4 text-center">สต๊อกคงเหลือ</th><th className="p-4 pr-6 text-center">จัดการ</th>
-                    </tr>
+                <table className="w-full text-left text-sm border-collapse">
+                  <thead className="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200">
+                    <tr><th className="px-6 py-4 font-bold">ชื่อ - นามสกุล</th><th className="px-6 py-4 font-bold">Username</th><th className="px-6 py-4 font-bold">สถานะ/สิทธิ์ปัจจุบัน</th><th className="px-6 py-4 font-bold text-center">จัดการสิทธิ์</th></tr>
                   </thead>
-                  <tbody>
-                    {products.map((product) => (
-                      <tr key={product.id} className="border-b border-slate-100 hover:bg-slate-50/80 transition-colors text-sm">
-                        <td className="p-4 pl-6 font-mono text-xs text-slate-500">SKU-{product.id.padStart(3, '0')}</td>
-                        <td className="p-4 font-semibold text-slate-800">{product.name}</td>
-                        <td className="p-4 text-slate-500 text-xs">{product.category}</td>
-                        <td className="p-4 text-right font-bold text-blue-700">{product.price.toLocaleString()}</td>
-                        <td className="p-4 text-center"><span className={`px-2.5 py-1 rounded-md text-xs font-bold ${product.stock > 20 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{product.stock} ชิ้น</span></td>
-                        <td className="p-4 pr-6 text-center"><button onClick={() => handleDeleteProduct(product.id, product.name)} className="text-red-500 hover:text-red-700 font-bold text-sm px-2 py-1 transition-colors">ลบออก</button></td>
+                  <tbody className="divide-y divide-slate-100">
+                    {users.map((user) => (
+                      <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-semibold text-slate-900">{user.name}</td>
+                        <td className="px-6 py-4 text-slate-500 font-mono text-xs">{user.username}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-block px-3 py-1 rounded-full text-[11px] font-bold border ${user.role === 'admin' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : user.role === 'employee' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>{user.role.toUpperCase()}</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {/* 🌟 จุดที่ 3 ที่ได้แก้ไขและนำมาใส่ให้เรียบร้อยแล้ว */}
+                          <select 
+                            value={user.role}
+                            onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                            disabled={user.id === 'u1'} // ป้องกันไม่ให้แอดมินคนแรกปลดตัวเอง
+                            className="text-xs font-bold border border-slate-300 rounded-lg px-3 py-2 bg-white outline-none focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="customer">CUSTOMER (ลูกค้า)</option>
+                            <option value="employee">EMPLOYEE (พนักงาน)</option>
+                            <option value="admin">ADMIN (ผู้ดูแลระบบ)</option>
+                          </select>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -341,8 +306,143 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ส่วน Chat UI เหมือนเดิม */}
+        {/* === แท็บ 3: จัดการสต๊อก (เหมือนพนักงาน) === */}
+        {activeTab === 'inventory' && (
+          <div className="max-w-5xl mx-auto animate-in fade-in">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><span className="text-3xl">📦</span> จัดการสต๊อกสินค้า</h1>
+              <button onClick={() => setShowAddModal(true)} className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-colors">+ เพิ่มสินค้าใหม่</button>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[600px]">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
+                      <th className="p-4 pl-6">รหัส</th><th className="p-4">ชื่อสินค้า</th><th className="p-4">หมวดหมู่</th><th className="p-4">ราคา</th><th className="p-4 text-center">จำนวนในคลัง</th><th className="p-4 text-center">จัดการ</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {products.map(product => (
+                      <tr key={product.id} className="hover:bg-slate-50 transition-colors text-sm">
+                        <td className="p-4 text-slate-500 pl-6">#{product.id}</td>
+                        <td className="p-4 font-semibold text-slate-900">{product.name}</td>
+                        <td className="p-4 text-slate-500">{product.category}</td>
+                        <td className="p-4 text-slate-900 font-bold">฿{product.price.toLocaleString()}</td>
+                        <td className="p-4">
+                          <div className="flex items-center justify-center gap-3">
+                            <button onClick={() => updateStock(product.id, -1)} className="w-8 h-8 flex items-center justify-center border border-slate-300 rounded-lg hover:bg-slate-100">-</button>
+                            <span className={`w-8 text-center font-bold ${product.stock < 5 ? 'text-red-600' : 'text-slate-900'}`}>{product.stock}</span>
+                            <button onClick={() => updateStock(product.id, 1)} className="w-8 h-8 flex items-center justify-center border border-slate-300 rounded-lg hover:bg-slate-100">+</button>
+                          </div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="flex justify-center gap-2">
+                            <button onClick={() => { setEditingProduct(product); setShowEditModal(true); }} className="text-blue-500 hover:text-blue-700 font-bold text-xs px-2 py-1 transition-colors">แก้ไข</button>
+                            <button onClick={() => handleDeleteProduct(product.id, product.name)} className="text-red-500 hover:text-red-700 font-bold text-xs px-2 py-1 transition-colors">ลบออก</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* === แท็บ 4: จัดการคำสั่งซื้อ (เหมือนพนักงาน) === */}
+        {activeTab === 'orders' && (
+          <div className="max-w-5xl mx-auto animate-in fade-in">
+            <h1 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2"><span className="text-3xl">🚚</span> ตรวจสอบคำสั่งซื้อ</h1>
+            {orders.length === 0 ? (
+              <div className="text-center py-20 text-slate-500 bg-white rounded-2xl border border-slate-200">ยังไม่มีคำสั่งซื้อในระบบ</div>
+            ) : (
+              <div className="space-y-4">
+                {orders.map(order => (
+                  <div key={order.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 hover:shadow-md transition-shadow">
+                    <div>
+                      <p className="font-bold text-slate-900">รหัสออเดอร์: <span className="font-mono text-blue-600">{order.id}</span></p>
+                      <p className="text-sm text-slate-500 mt-1">ลูกค้า: {order.shipping?.fullName || 'ไม่ระบุ'} <span className="text-xs text-slate-400">({new Date(order.date).toLocaleDateString('th-TH')})</span></p>
+                      <p className="text-sm font-bold text-slate-900 mt-1">ยอดรวม: ฿{order.total.toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                      <span className="text-sm font-bold text-slate-600 shrink-0">สถานะ:</span>
+                      <select value={order.status} onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)} className={`text-sm font-bold px-4 py-2.5 rounded-xl border outline-none cursor-pointer transition-all w-full md:w-auto ${order.status === 'จัดส่งสำเร็จ' || order.status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : order.status === 'กำลังจัดส่ง' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                        <option value="รอชำระเงิน">รอชำระเงิน</option><option value="ตรวจสอบ">ตรวจสอบ</option><option value="กำลังจัดส่ง">กำลังจัดส่ง</option><option value="จัดส่งสำเร็จ">จัดส่งสำเร็จ</option>
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
+
+      {/* 🔴 Modal เพิ่มสินค้า (เหมือนพนักงาน) */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-xl font-bold mb-5">📦 เพิ่มสินค้าใหม่</h2>
+            <form onSubmit={handleAddProduct} className="space-y-4">
+              <input required type="text" placeholder="ชื่อสินค้า" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} className="w-full border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+              <select value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} className="w-full border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="บ้านพักอาศัย (Residential)">บ้านพักอาศัย (Residential)</option><option value="อินเวอร์เตอร์">อินเวอร์เตอร์</option><option value="อุปกรณ์ติดตั้ง">อุปกรณ์ติดตั้ง</option><option value="ระบบกักเก็บพลังงาน">ระบบกักเก็บพลังงาน</option>
+              </select>
+              <div className="grid grid-cols-2 gap-4">
+                <input required type="number" placeholder="ราคา (บาท)" value={newProduct.price || ''} onChange={e => setNewProduct({...newProduct, price: Number(e.target.value)})} className="w-full border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+                <input required type="number" placeholder="สต๊อก" value={newProduct.stock || ''} onChange={e => setNewProduct({...newProduct, stock: Number(e.target.value)})} className="w-full border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <input type="file" accept="image/*" onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => setNewProduct({...newProduct, image: reader.result as string});
+                  reader.readAsDataURL(file);
+                }
+              }} className="w-full border rounded-xl p-2 text-sm" />
+              <textarea required rows={3} placeholder="รายละเอียดสินค้า..." value={newProduct.description || ''} onChange={e => setNewProduct({...newProduct, description: e.target.value})} className="w-full border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 bg-slate-100 py-3 rounded-xl font-bold">ยกเลิก</button>
+                <button type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold">บันทึก</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 🟢 Modal แก้ไขสินค้า (เหมือนพนักงาน) */}
+      {showEditModal && editingProduct && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-xl font-bold mb-5">✏️ แก้ไขสินค้า</h2>
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              <input required type="text" value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} className="w-full border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+              <select value={editingProduct.category} onChange={e => setEditingProduct({...editingProduct, category: e.target.value})} className="w-full border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="บ้านพักอาศัย (Residential)">บ้านพักอาศัย (Residential)</option><option value="อินเวอร์เตอร์">อินเวอร์เตอร์</option><option value="อุปกรณ์ติดตั้ง">อุปกรณ์ติดตั้ง</option><option value="ระบบกักเก็บพลังงาน">ระบบกักเก็บพลังงาน</option>
+              </select>
+              <div className="grid grid-cols-2 gap-4">
+                <input required type="number" value={editingProduct.price} onChange={e => setEditingProduct({...editingProduct, price: Number(e.target.value)})} className="w-full border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+                <input required type="number" value={editingProduct.stock} onChange={e => setEditingProduct({...editingProduct, stock: Number(e.target.value)})} className="w-full border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <input type="file" accept="image/*" onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => setEditingProduct({...editingProduct, image: reader.result as string});
+                  reader.readAsDataURL(file);
+                }
+              }} className="w-full border rounded-xl p-2 text-sm" />
+              <textarea required rows={3} value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} className="w-full border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => { setShowEditModal(false); setEditingProduct(null); }} className="flex-1 bg-slate-100 py-3 rounded-xl font-bold">ยกเลิก</button>
+                <button type="submit" className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold">บันทึกการแก้ไข</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

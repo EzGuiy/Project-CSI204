@@ -78,3 +78,33 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'ไม่สามารถลบผู้ใช้ได้' }, { status: 500 });
   }
 }
+
+// 🟡 ---------------------------------------------------------
+// เพิ่มฟังก์ชัน PUT ด้านล่างสุด สำหรับให้อัปเดตสิทธิ์ผู้ใช้งาน (Role)
+// ------------------------------------------------------------
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json(); // รับค่า { id, role } ที่ส่งมาจากหน้าเว็บ Dashboard
+    const filePath = path.join(process.cwd(), 'data', 'db.json');
+    const fileData = await fs.readFile(filePath, 'utf8');
+    const db = JSON.parse(fileData);
+
+    if (!db.users) {
+      return NextResponse.json({ error: 'ไม่พบฐานข้อมูลผู้ใช้งาน' }, { status: 404 });
+    }
+
+    // ค้นหาตำแหน่งของ User ที่ต้องการเปลี่ยนสิทธิ์
+    const userIndex = db.users.findIndex((u: any) => u.id === body.id);
+    
+    if (userIndex > -1) {
+      db.users[userIndex].role = body.role; // อัปเดตสิทธิ์ใหม่
+      await fs.writeFile(filePath, JSON.stringify(db, null, 2), 'utf8'); // เซฟทับลงไฟล์
+      return NextResponse.json({ message: 'อัปเดตสิทธิ์สำเร็จ' }, { status: 200 });
+    } else {
+      return NextResponse.json({ error: 'ไม่พบผู้ใช้งานในระบบ' }, { status: 404 });
+    }
+  } catch (error) {
+    console.error("Error updating user role in db.json:", error);
+    return NextResponse.json({ error: 'ไม่สามารถอัปเดตข้อมูลได้' }, { status: 500 });
+  }
+}

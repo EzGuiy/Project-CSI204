@@ -260,25 +260,114 @@ export default function EmployeeDashboard() {
         
         {/* === แท็บ 1: ภาพรวมยอดขาย === */}
         {activeTab === 'overview' && (
-          <div className="max-w-5xl mx-auto animate-in fade-in">
-            <h1 className="text-2xl font-bold text-zinc-900 mb-6">สรุปข้อมูลสำหรับพนักงาน</h1>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm text-center">
-                <p className="text-zinc-500 text-sm font-bold mb-2">ยอดขายที่สำเร็จแล้ว (บาท)</p>
-                <p className="text-4xl font-black text-emerald-600">฿{totalSales.toLocaleString()}</p>
+          <div className="max-w-6xl mx-auto animate-in fade-in">
+            <h1 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <span className="text-3xl">📊</span> ภาพรวมระบบและยอดขาย
+            </h1>
+            
+            {/* 🌟 1. ส่วนตัวเลขสถิติสำคัญ (KPI Cards) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center">
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">ยอดขายสะสม</p>
+                <p className="text-3xl font-black text-emerald-600">฿{totalSales.toLocaleString()}</p>
               </div>
-              <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm text-center">
-                <p className="text-zinc-500 text-sm font-bold mb-2">ออเดอร์รอตรวจสอบ/จัดส่ง</p>
-                <p className="text-4xl font-black text-amber-500">{pendingOrders} <span className="text-lg">รายการ</span></p>
+              
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                <div className="absolute right-[-10px] top-[-10px] opacity-10 text-6xl">📦</div>
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">ออเดอร์รอจัดการ</p>
+                <p className="text-3xl font-black text-amber-500">{pendingOrders} <span className="text-sm text-slate-400 font-medium">รายการ</span></p>
               </div>
-              <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm text-center">
-                <p className="text-zinc-500 text-sm font-bold mb-2">สินค้าใกล้หมดสต๊อก (น้อยกว่า 5)</p>
-                <p className="text-4xl font-black text-red-600">{products.filter(p => p.stock < 5 && p.stock > 0).length} <span className="text-lg">รายการ</span></p>
+              
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                <div className="absolute right-[-10px] top-[-10px] opacity-10 text-6xl">💬</div>
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">แชทที่ยังไม่ตอบ</p>
+                <p className="text-3xl font-black text-blue-600">{totalUnreadChats} <span className="text-sm text-slate-400 font-medium">ข้อความ</span></p>
+              </div>
+              
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                <div className="absolute right-[-10px] top-[-10px] opacity-10 text-6xl">⚠️</div>
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">สต๊อกเหลือน้อย (ต่ำกว่า 5)</p>
+                <p className="text-3xl font-black text-red-600">{products.filter(p => p.stock < 5).length} <span className="text-sm text-slate-400 font-medium">รายการ</span></p>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* 🌟 2. รายการออเดอร์ล่าสุด (Recent Orders) */}
+              <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                  <h2 className="font-bold text-slate-800">คำสั่งซื้อล่าสุด 5 รายการ</h2>
+                  <button onClick={() => setActiveTab('orders')} className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors">ดูทั้งหมด ›</button>
+                </div>
+                <div className="p-0 flex-grow">
+                  {orders.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 text-sm">ยังไม่มีคำสั่งซื้อในระบบ</div>
+                  ) : (
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
+                        <tr>
+                          <th className="px-5 py-3">รหัสออเดอร์</th>
+                          <th className="px-5 py-3">ลูกค้า</th>
+                          <th className="px-5 py-3 text-right">ยอดรวม</th>
+                          <th className="px-5 py-3 text-center">สถานะ</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {orders.slice(0, 5).map(order => (
+                          <tr key={order.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-5 py-3 font-mono text-slate-600">{order.id}</td>
+                            <td className="px-5 py-3 font-medium text-slate-900">{order.shipping?.fullName || 'ไม่ระบุ'}</td>
+                            <td className="px-5 py-3 text-right font-bold text-slate-700">฿{order.total.toLocaleString()}</td>
+                            <td className="px-5 py-3 text-center">
+                              <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                                order.status === 'จัดส่งสำเร็จ' || order.status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                order.status === 'กำลังจัดส่ง' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                'bg-amber-50 text-amber-700 border-amber-200'
+                              }`}>
+                                {order.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+
+              {/* 🌟 3. รายการสินค้าที่ต้องระวัง (Inventory Alerts) */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+                  <h2 className="font-bold text-slate-800">แจ้งเตือนสต๊อกสินค้า</h2>
+                </div>
+                <div className="p-5 flex-grow overflow-y-auto max-h-[300px] space-y-3">
+                  {products.filter(p => p.stock < 5).length === 0 ? (
+                    <div className="text-center text-slate-400 text-sm py-4">สต๊อกสินค้าอยู่ในเกณฑ์ปกติทั้งหมด 🎉</div>
+                  ) : (
+                    products.filter(p => p.stock < 5).sort((a, b) => a.stock - b.stock).map(product => (
+                      <div key={product.id} className="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-white shadow-sm">
+                        <div className="min-w-0 flex-1 pr-3">
+                          <p className="font-bold text-xs text-slate-800 truncate">{product.name}</p>
+                          <p className="text-[10px] text-slate-400">{product.category}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          {product.stock === 0 ? (
+                            <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-md">สินค้าหมด</span>
+                          ) : (
+                            <span className="bg-red-50 text-red-600 border border-red-200 text-[10px] font-bold px-2 py-1 rounded-md">เหลือ {product.stock} ชิ้น</span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="p-3 border-t border-slate-100 bg-slate-50 text-center">
+                  <button onClick={() => setActiveTab('inventory')} className="text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors">จัดการสต๊อกสินค้า ›</button>
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
-
         {/* === แท็บ 2: จัดการสต๊อก === */}
         {activeTab === 'inventory' && (
           <div className="max-w-5xl mx-auto animate-in fade-in">
