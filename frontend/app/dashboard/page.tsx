@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Product { id: string; name: string; category: string; price: number; stock: number; image?: string; description?: string; }
-interface Order { id: string; date: string; total: number; status: string; shipping: { fullName: string; }; }
+interface OrderItem { id: string; name: string; price: number; quantity: number; icon: string; }
+interface Order { id: string; date: string; total: number; subtotal: number; shippingFee: number; status: string; paymentMethod: string; items: OrderItem[]; shipping: { fullName: string; phone: string; address: string; subDistrict: string; district: string; province: string; postalCode: string; }; }
 interface ChatProduct { id: string; name: string; category: string; price: number; capacity: string; imageUrl: string; }
 interface Message { id: string; chatId: string; senderName: string; sender: 'user' | 'agent'; text?: string; image?: string; product?: ChatProduct; isRead: boolean; timestamp: string; }
 interface ChatSession { id: string; name: string; lastMessage: string; time: string; unread: number; messages: Message[]; }
@@ -18,6 +19,12 @@ export default function EmployeeDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+
+  const toggleOrderExpand = (orderId: string) => {
+    setExpandedOrders(prev => ({ ...prev, [orderId]: !prev[orderId] }));
+  };
+
   const [chats, setChats] = useState<ChatSession[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string>('');
   const [replyText, setReplyText] = useState('');
@@ -435,30 +442,111 @@ export default function EmployeeDashboard() {
             ) : (
               <div className="space-y-4">
                 {orders.map(order => (
-                  <div key={order.id} className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 hover:shadow-md transition-shadow">
-                    <div>
-                      <p className="font-bold text-slate-900">รหัสออเดอร์: <span className="font-mono text-blue-600">{order.id}</span></p>
-                      <p className="text-sm text-slate-500 mt-1">ลูกค้า: {order.shipping?.fullName || 'ไม่ระบุ'} <span className="text-xs text-slate-400">({new Date(order.date).toLocaleDateString('th-TH')})</span></p>
-                      <p className="text-sm font-bold text-zinc-900 mt-1">ยอดรวม: ฿{order.total.toLocaleString()}</p>
+                  <div key={order.id} className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                      <div className="flex-grow cursor-pointer" onClick={() => toggleOrderExpand(order.id)}>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-slate-900">รหัสออเดอร์: <span className="font-mono text-blue-600">{order.id}</span></p>
+                          <span className="text-slate-400 text-xs">{expandedOrders[order.id] ? '▲ ซ่อนรายละเอียด' : '▼ ดูรายละเอียด'}</span>
+                        </div>
+                        <p className="text-sm text-slate-500 mt-1">ลูกค้า: {order.shipping?.fullName || 'ไม่ระบุ'} <span className="text-xs text-slate-400">({new Date(order.date).toLocaleDateString('th-TH')})</span></p>
+                        <p className="text-sm font-bold text-zinc-900 mt-1">ยอดรวม: ฿{order.total?.toLocaleString()}</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
+                        <span className="text-sm font-bold text-slate-600 shrink-0">สถานะ:</span>
+                        <select
+                          value={order.status}
+                          onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                          className={`text-sm font-bold px-4 py-2.5 rounded-xl border outline-none cursor-pointer transition-all w-full md:w-auto ${
+                            order.status === 'จัดส่งสำเร็จ' || order.status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            order.status === 'กำลังจัดส่ง' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                            'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}
+                        >
+                          <option value="รอชำระเงิน">รอชำระเงิน</option>
+                          <option value="ตรวจสอบ">ตรวจสอบ</option>
+                          <option value="กำลังจัดส่ง">กำลังจัดส่ง</option>
+                          <option value="จัดส่งสำเร็จ">จัดส่งสำเร็จ</option>
+                        </select>
+                      </div>
                     </div>
                     
-                    <div className="flex items-center gap-3 w-full md:w-auto">
-                      <span className="text-sm font-bold text-slate-600 shrink-0">สถานะ:</span>
-                      <select
-                        value={order.status}
-                        onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                        className={`text-sm font-bold px-4 py-2.5 rounded-xl border outline-none cursor-pointer transition-all w-full md:w-auto ${
-                          order.status === 'จัดส่งสำเร็จ' || order.status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          order.status === 'กำลังจัดส่ง' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                          'bg-amber-50 text-amber-700 border-amber-200'
-                        }`}
-                      >
-                        <option value="รอชำระเงิน">รอชำระเงิน</option>
-                        <option value="ตรวจสอบ">ตรวจสอบ</option>
-                        <option value="กำลังจัดส่ง">กำลังจัดส่ง</option>
-                        <option value="จัดส่งสำเร็จ">จัดส่งสำเร็จ</option>
-                      </select>
-                    </div>
+                    {/* ส่วนแสดงรายละเอียดออเดอร์ */}
+                    {expandedOrders[order.id] && (
+                      <div className="border-t border-zinc-100 p-6 bg-slate-50">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* รายการสินค้า */}
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">📦 รายการสินค้า</h3>
+                            <div className="space-y-3">
+                              {order.items?.map((item, idx) => (
+                                <div key={idx} className="flex gap-3 items-center bg-white p-3 rounded-xl border border-slate-200">
+                                  <img src={item.icon || '/file.svg'} alt={item.name} className="w-12 h-12 object-contain bg-slate-50 rounded-lg p-1 border border-slate-100" />
+                                  <div className="flex-grow min-w-0">
+                                    <p className="font-bold text-xs text-slate-800 truncate">{item.name}</p>
+                                    <p className="text-xs text-slate-500">จำนวน: {item.quantity} ชิ้น</p>
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    <p className="font-bold text-sm text-blue-600">฿{(item.price * item.quantity).toLocaleString()}</p>
+                                  </div>
+                                </div>
+                              ))}
+                              {(!order.items || order.items.length === 0) && (
+                                <p className="text-sm text-slate-500">ไม่มีข้อมูลรายการสินค้า</p>
+                              )}
+                            </div>
+                            
+                            {/* สรุปยอดเงิน */}
+                            <div className="mt-4 bg-white p-4 rounded-xl border border-slate-200 space-y-2 text-sm">
+                              <div className="flex justify-between text-slate-600">
+                                <span>มูลค่าสินค้า:</span>
+                                <span>฿{order.subtotal?.toLocaleString() || order.total?.toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between text-slate-600">
+                                <span>ค่าจัดส่ง:</span>
+                                <span>฿{order.shippingFee?.toLocaleString() || 0}</span>
+                              </div>
+                              <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-slate-100">
+                                <span>ยอดสุทธิ:</span>
+                                <span className="text-blue-600 text-base">฿{order.total?.toLocaleString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* ข้อมูลการจัดส่งและการชำระเงิน */}
+                          <div className="space-y-6">
+                            <div>
+                              <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">📍 ข้อมูลการจัดส่ง</h3>
+                              <div className="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-2">
+                                <p><span className="font-semibold text-slate-800">ผู้รับ:</span> {order.shipping?.fullName || '-'}</p>
+                                <p><span className="font-semibold text-slate-800">เบอร์โทร:</span> {order.shipping?.phone || '-'}</p>
+                                <div className="flex items-start gap-1">
+                                  <span className="font-semibold text-slate-800 shrink-0">ที่อยู่:</span> 
+                                  <p className="leading-relaxed">
+                                    {order.shipping?.address ? (
+                                      `${order.shipping.address} ${order.shipping.subDistrict || ''} ${order.shipping.district || ''} ${order.shipping.province || ''} ${order.shipping.postalCode || ''}`
+                                    ) : '-'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">💳 วิธีการชำระเงิน</h3>
+                              <div className="bg-white p-4 rounded-xl border border-slate-200 text-sm">
+                                <p className="font-bold text-emerald-600 flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                  {order.paymentMethod === 'qr' ? 'สแกน QR Code (PromptPay)' : 
+                                   order.paymentMethod === 'card' ? 'บัตรเครดิต/เดบิต' : 
+                                   order.paymentMethod || 'ไม่ระบุ'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

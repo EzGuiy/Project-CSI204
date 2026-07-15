@@ -55,6 +55,14 @@
       "username": "Guiy",
       "password": "123456",
       "role": "customer"
+    },
+    {
+      "id": "USR-CUST-063369",
+      "name": "guiy",
+      "email": "guiy@gmail.com",
+      "username": "guiy@gmail.com",
+      "password": "1234",
+      "role": "customer"
     }
   ],
   "products": [
@@ -376,6 +384,15 @@
       "sender": "agent",
       "text": "ควย ออกจากเว็บกูไป",
       "timestamp": "10:58",
+      "isRead": true
+    },
+    {
+      "id": "msg-1784091612247-user",
+      "chatId": "USR-CUST-676480",
+      "senderName": "KawinGiuy",
+      "sender": "user",
+      "text": "อาโล",
+      "timestamp": "12:00",
       "isRead": true
     }
   ]

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -86,6 +87,13 @@ export default function LoginPage() {
             เข้าสู่ระบบ
           </button>
         </form>
+        
+        <div className="mt-6 text-center text-sm text-zinc-600">
+          ยังไม่มีบัญชีใช่หรือไม่?{' '}
+          <Link href="/register" className="text-zinc-900 font-bold hover:underline">
+            สมัครสมาชิกที่นี่
+          </Link>
+        </div>
       </div>
     </div>
   );
