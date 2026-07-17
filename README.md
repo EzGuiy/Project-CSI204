@@ -340,34 +340,76 @@
 ## 20. สถาปัตยกรรมของระบบ (System Architecture)
 
 ```mermaid
-graph LR
+
+flowchart LR
+
     subgraph Client ["1. Presentation Layer (Client)"]
+
         Browser["Web Browser (PC / Mobile)"]
+
         UI["Next.js UI & Tailwind CSS"]
-        LocalStore["Local Storage"]
-        Browser --- UI
-        UI --- LocalStore
+
+        LocalStore[("Local Storage")]
+
+        Browser <--> UI
+
+        UI <--> LocalStore
+
     end
+
+
 
     subgraph Server ["2. Application Layer (API Backend)"]
-        API["Express.js API (Node.js)"]
-        Auth["JWT Authentication"]
-        OrderSys["Order & Inventory"]
+
+        API["Express.js API (Node.js Engine)"]
+
+        Auth["JWT Authentication Service"]
+
+        OrderSys["Order & Inventory Management"]
+
         Calc["Solar Calculator Engine"]
+
         API --- Auth
+
         API --- OrderSys
+
         API --- Calc
+
     end
 
+
+
     subgraph Database ["3. Data Layer (Database Storage)"]
-        DB["PostgreSQL Database"]
+
+        DB[("PostgreSQL Database")]
+
         TB_User["Table: Users"]
+
         TB_Prod["Table: Products"]
-        TB_Order["Table: Orders"]
+
+        TB_Order["Table: Orders & Calculators"]
+
         DB --- TB_User
+
         DB --- TB_Prod
+
         DB --- TB_Order
+
     end
+
+
+
+    UI <-->|RESTful HTTP Requests| API
+
+    API <-->|SQL Queries| DB
+
+
+
+    style Client fill:#f9f9f9,stroke:#333,stroke-width:2px
+
+    style Server fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+
+    style Database fill:#f1f8e9,stroke:#2e7d32,stroke-width:2px
 
     UI <-->|RESTful HTTP Requests| API
     API <-->|SQL Queries (pg-pool)| DB
