@@ -328,7 +328,9 @@
 * **Corrective Maintenance (การบำรุงรักษาเชิงแก้ไข):**
   * ทีม Support คอยเฝ้าระวัง (Monitor) และสแตนด์บายแก้ไข Bug หรือข้อผิดพลาดตามกำหนดเวลาใน Severity Level
 
-### 🏗️ สถาปัตยกรรมของระบบ (System Architecture)
+---
+
+## 20. สถาปัตยกรรมของระบบ (System Architecture)
 
 ```mermaid
 flowchart LR
@@ -361,7 +363,7 @@ flowchart LR
     end
 
     UI <-->|RESTful HTTP Requests| API
-    API <-->|SQL Queries (pg-pool)| DB
+    API <-->|SQL Queries| DB
 
     style Client fill:#f9f9f9,stroke:#333,stroke-width:2px
     style Server fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
