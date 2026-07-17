@@ -230,33 +230,32 @@
 
 ## 12.5 โครงสร้างฐานข้อมูลเชิงลึก (Database Schema Specifications)
 
-เพื่อรองรับความสัมพันธ์ของข้อมูลตามข้อกำหนดคลาสไดอะแกรม นี่คือโครงสร้างแผนภาพ ER Diagram และตารางหลักที่สำคัญของระบบ SolarTech บนระบบฐานข้อมูลเชิงสัมพันธ์ PostgreSQL:
+เพื่อรองรับความสัมพันธ์ของข้อมูลตามข้อกำหนดคลาสไดอะแกรม นี่คือโครงสร้างตารางหลักที่สำคัญของระบบ SolarTech บนระบบฐานข้อมูลเชิงสัมพันธ์ PostgreSQL:
 
-### แผนภาพโครงสร้างความสัมพันธ์ (ER Diagram)
+### 1. ตารางข้อมูลผู้ใช้งาน (`users`)
 
-```mermaid
-erDiagram
-    users ||--o{ solar_calculation_logs : "has (nullable)"
-    
-    users {
-        UUID id PK "รหัสระบุตัวตนสากล (UUID)"
-        VARCHAR(255) email "ที่อยู่อีเมลเข้าสู่ระบบ (Unique)"
-        VARCHAR(255) password_hash "รหัสผ่านที่เข้ารหัส bcrypt"
-        VARCHAR(20) role "ระดับสิทธิ์การเข้าถึงระบบ"
-        TIMESTAMP created_at "วันเวลาที่สร้างบัญชี"
-    }
-    
-    solar_calculation_logs {
-        SERIAL log_id PK "รหัสไอดีประวัติการคำนวณ"
-        UUID user_id FK "รหัสผู้ใช้เชื่อมโยง (เป็น Null ได้)"
-        DECIMAL monthly_electricity_bill "ยอดค่าไฟฟ้ารายเดือน"
-        INT daytime_usage_percentage "เปอร์เซ็นต์ใช้ไฟฟ้ากลางวัน"
-        DECIMAL recommended_kw "ขนาดกิโลวัตต์ที่แนะนำ"
-        INT recommended_panels_count "จำนวนแผงโซล่าเซลล์ที่แนะนำ"
-        DECIMAL estimated_savings_yearly "ยอดเงินประหยัดได้ต่อปี"
-        TIMESTAMP calculated_at "วันเวลาที่ทำการคำนวณ"
-    }
+| ชื่อคอลัมน์ (Column) | ชนิดข้อมูล (Data Type) | คีย์/เงื่อนไข (Constraints) | คำอธิบาย (Description) |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | **Primary Key** | รหัสระบุตัวตนสากลแบบสุ่มของผู้ใช้แต่ละบัญชี |
+| `email` | `VARCHAR(255)` | Unique, Not Null | ที่อยู่อีเมลสำหรับสมัครและเข้าสู่ระบบ |
+| `password_hash` | `VARCHAR(255)` | Not Null | รหัสผ่านที่ผ่านการเข้ารหัสความปลอดภัยด้วย bcrypt |
+| `role` | `VARCHAR(20)` | Default: 'customer' | สิทธิ์ระดับการเข้าถึงระบบ (`customer`, `staff`, `admin`) |
+| `created_at` | `TIMESTAMP` | Default: CURRENT_TIMESTAMP | วันและเวลาที่สร้างบัญชีผู้ใช้งาน |
 
+<br>
+
+### 2. ตารางบันทึกประวัติการคำนวณระบบโซล่าเซลล์ (`solar_calculation_logs`)
+
+| ชื่อคอลัมน์ (Column) | ชนิดข้อมูล (Data Type) | คีย์/เงื่อนไข (Constraints) | คำอธิบาย (Description) |
+| :--- | :--- | :--- | :--- |
+| `log_id` | `SERIAL` | **Primary Key** | รหัสไอดีรันเลขอัตโนมัติสำหรับรายการคำนวณแต่ละครั้ง |
+| `user_id` | `UUID` | **Foreign Key** (Nullable) | เชื่อมโยงผู้ใช้ไปยังตาราง `users.id` (เป็น Null ได้หากยังไม่เข้าระบบ) |
+| `monthly_electricity_bill` | `DECIMAL(10, 2)` | Not Null | ยอดค่าไฟฟ้ารายเดือนที่ลูกค้านำมาใช้ในการคำนวณ |
+| `daytime_usage_percentage` | `INT` | Not Null | ค่าสัดส่วนเปอร์เซ็นต์การใช้ไฟฟ้าในเวลากลางวัน |
+| `recommended_kw` | `DECIMAL(5, 2)` | Not Null | ขนาดกำลังกิโลวัตต์ (kW) ที่ระบบวิเคราะห์และแนะนำให้ติดตั้ง |
+| `recommended_panels_count`| `INT` | Not Null | จำนวนรวมของแผงโซล่าเซลล์ที่เหมาะสมต่อกำลังการผลิต |
+| `estimated_savings_yearly`| `DECIMAL(12, 2)` | Not Null | จำนวนเงินรวมที่ประเมินว่าจะสามารถประหยัดได้ต่อปี (บาท) |
+| `calculated_at` | `TIMESTAMP` | Default: CURRENT_TIMESTAMP | วันและเวลาที่ทำรายการประมวลผลคำนวณ |
 ---
 
 ## 13. Use Case Diagram
