@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 interface OrderItem {
@@ -19,7 +19,15 @@ interface Order {
   subtotal: number;
   shippingFee: number;
   total: number;
-  shipping: { fullName: string; phone: string; address: string; subDistrict: string; district: string; province: string; postalCode: string; };
+  shipping: {
+    fullName: string;
+    phone: string;
+    address: string;
+    subDistrict: string;
+    district: string;
+    province: string;
+    postalCode: string;
+  };
   paymentMethod: 'credit_card' | 'qr';
   cardLast4: string | null;
   cardNetwork: string | null;
@@ -31,12 +39,12 @@ interface Order {
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   'รอชำระเงิน': { label: 'รอชำระเงิน', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
-  'ตรวจสอบ': { label: 'กำลังตรวจสอบ', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
+  'ตรวจสอบ': { label: 'ตรวจสอบ', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
   'กำลังจัดส่ง': { label: 'กำลังจัดส่ง', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
   'จัดส่งสำเร็จ': { label: 'จัดส่งสำเร็จ', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
   'confirmed': { label: 'ยืนยันคำสั่งซื้อ', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
   'processing': { label: 'กำลังดำเนินการ', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
-  'shipped': { label: 'อยู่ระหว่างจัดส่ง', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
+  'shipped': { label: 'กำลังจัดส่ง', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
   'delivered': { label: 'จัดส่งสำเร็จ', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
 };
 
@@ -51,6 +59,14 @@ export default function OrdersPage() {
   const [user, setUser] = useState<{ id: string; name: string; role: string } | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  
+  // 🌟 ใช้ useRef เก็บค่า order ล่าสุด เพื่อให้ setInterval ทำงานได้ถูกต้อง
+  const ordersRef = useRef<Order[]>([]);
+
+  // อัปเดต ordersRef ทุกครั้งที่ orders เปลี่ยนแปลง
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
 
   useEffect(() => {
     const session = localStorage.getItem('solar_session');
@@ -77,19 +93,56 @@ export default function OrdersPage() {
     };
 
     fetchMyOrders();
+
+    // 🌟 ระบบขยับสถานะอัตโนมัติ และ ดึงข้อมูลใหม่ทุกๆ 10 วินาที
+    const intervalId = setInterval(async () => {
+      let hasChanges = false;
+
+      // 1. วนลูปเช็คออเดอร์ในหน้าจอปัจจุบัน
+      for (const order of ordersRef.current) {
+        let nextStatus = null;
+        
+        // กฎการเปลี่ยนสถานะ: รอชำระเงิน/ตรวจสอบ -> กำลังจัดส่ง -> จัดส่งสำเร็จ
+        if (order.status === 'รอชำระเงิน' || order.status === 'ตรวจสอบ') {
+          nextStatus = 'กำลังจัดส่ง';
+        } else if (order.status === 'กำลังจัดส่ง' || order.status === 'shipped') {
+          nextStatus = 'จัดส่งสำเร็จ';
+        }
+
+        // ถ้ามีสถานะถัดไป ให้ส่ง API ไปอัปเดต
+        if (nextStatus) {
+          try {
+            await fetch('/api/orders', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId: order.id, status: nextStatus })
+            });
+            hasChanges = true;
+          } catch (e) {
+            console.error('Auto update failed:', e);
+          }
+        }
+      }
+
+      // 2. โหลดข้อมูลมาแสดงใหม่ (เพื่อให้หน้าจอเปลี่ยนตาม)
+      fetchMyOrders();
+      
+    }, 10000); // รันทุก 10 วินาที
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  // 🖨️ ฟังก์ชันสำหรับพิมพ์ใบเสร็จสำหรับหน้านี้
+  // ฟังก์ชันพิมพ์ใบเสร็จ
   const handlePrintReceipt = (order: Order, e: React.MouseEvent) => {
-    e.stopPropagation(); // ป้องกันไม่ให้แผงรายละเอียดหุบ
+    e.stopPropagation(); 
     
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('กรุณาอนุญาตให้เบราว์เซอร์เปิด Pop-up เพื่อพิมพ์ใบเสร็จ');
+      alert('โปรดอนุญาต Pop-up บนเบราว์เซอร์ของคุณเพื่อพิมพ์ใบเสร็จ');
       return;
     }
 
@@ -98,7 +151,7 @@ export default function OrdersPage() {
       <html lang="th">
       <head>
         <meta charset="UTF-8">
-        <title>ใบสั่งซื้อ/ใบเสร็จรับเงิน - ${order.id}</title>
+        <title>ใบเสร็จรับเงิน - ${order.id}</title>
         <style>
           body { font-family: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; line-height: 1.5; max-width: 800px; margin: 0 auto; }
           .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #1e3a8a; padding-bottom: 20px; }
@@ -122,32 +175,32 @@ export default function OrdersPage() {
       <body>
         <div class="header">
           <h1>SolarTech Energy</h1>
-          <p>ใบสั่งซื้อ / ใบเสร็จรับเงิน (Purchase Order / Receipt)</p>
+          <p>ใบเสร็จรับเงิน (Purchase Order / Receipt)</p>
         </div>
         
         <div class="info-section">
           <div class="info-box">
             <h3>ข้อมูลลูกค้า (Customer Info)</h3>
-            <p><strong>ชื่อ-นามสกุล:</strong> ${order.shipping.fullName}</p>
-            <p><strong>เบอร์โทรศัพท์:</strong> ${order.shipping.phone}</p>
-            <p><strong>ที่อยู่จัดส่ง:</strong> ${order.shipping.address}, ต.${order.shipping.subDistrict} อ.${order.shipping.district} จ.${order.shipping.province} ${order.shipping.postalCode}</p>
+            <p><strong>ชื่อ:</strong> ${order.shipping.fullName}</p>
+            <p><strong>เบอร์โทร:</strong> ${order.shipping.phone}</p>
+            <p><strong>ที่อยู่จัดส่ง:</strong> ${order.shipping.address}, แขวง${order.shipping.subDistrict} เขต${order.shipping.district} จ.${order.shipping.province} ${order.shipping.postalCode}</p>
           </div>
           <div class="info-box">
             <h3>ข้อมูลคำสั่งซื้อ (Order Info)</h3>
-            <p><strong>รหัสคำสั่งซื้อ:</strong> ${order.id}</p>
+            <p><strong>หมายเลขคำสั่งซื้อ:</strong> ${order.id}</p>
             <p><strong>วันที่สั่งซื้อ:</strong> ${new Date(order.date).toLocaleString('th-TH')}</p>
-            <p><strong>วิธีชำระเงิน:</strong> ${order.paymentMethod === 'credit_card' ? 'บัตรเครดิต/เดบิต' : 'โอนผ่านธนาคาร (PromptPay)'}</p>
-            <p><strong>สถานะ:</strong> ${order.status}</p>
+            <p><strong>วิธีชำระเงิน:</strong> ${order.paymentMethod === 'credit_card' ? 'บัตรเครดิต/เดบิต' : 'โอนเงิน (PromptPay)'}</p>
+            <p><strong>สถานะปัจจุบัน:</strong> ${order.status}</p>
           </div>
         </div>
 
         <table>
           <thead>
             <tr>
-              <th style="width: 5%;">ลำดับ</th>
-              <th style="width: 50%;">รายการสินค้า (Description)</th>
+              <th style="width: 5%;">#</th>
+              <th style="width: 50%;">รายการ (Description)</th>
               <th style="width: 15%; text-align: center;">จำนวน (Qty)</th>
-              <th class="right" style="width: 15%;">ราคา/หน่วย (Unit Price)</th>
+              <th class="right" style="width: 15%;">ราคาต่อหน่วย (Unit Price)</th>
               <th class="right" style="width: 15%;">ยอดรวม (Amount)</th>
             </tr>
           </thead>
@@ -166,12 +219,12 @@ export default function OrdersPage() {
 
         <div class="summary">
           <div class="summary-row">
-            <span>มูลค่าสินค้ารวม (Subtotal):</span>
+            <span>ยอดรวมสินค้า (Subtotal):</span>
             <span>฿${(order.total - order.shippingFee).toLocaleString()}</span>
           </div>
           <div class="summary-row">
             <span>ค่าจัดส่ง (Shipping Fee):</span>
-            <span>${order.shippingFee === 0 ? 'ฟรี' : '฿' + order.shippingFee.toLocaleString()}</span>
+            <span>${order.shippingFee === 0 ? 'จัดส่งฟรี' : '฿' + order.shippingFee.toLocaleString()}</span>
           </div>
           <div class="summary-row total">
             <span>ยอดชำระสุทธิ (Grand Total):</span>
@@ -180,8 +233,8 @@ export default function OrdersPage() {
         </div>
 
         <div class="footer">
-          <p>เอกสารฉบับนี้ถูกสร้างขึ้นโดยระบบอัตโนมัติของ SolarTech | ขอบคุณที่ไว้วางใจใช้บริการของเรา</p>
-          <p>หากมีข้อสงสัยเกี่ยวกับคำสั่งซื้อ โปรดติดต่อแผนกบริการลูกค้า</p>
+          <p>ขอขอบคุณที่ไว้วางใจเลือกใช้บริการ SolarTech | พลังงานสะอาดเพื่ออนาคต</p>
+          <p>เอกสารฉบับนี้ถูกสร้างขึ้นอัตโนมัติจากระบบ</p>
         </div>
 
         <script>
@@ -195,7 +248,6 @@ export default function OrdersPage() {
       </body>
       </html>
     `;
-
     printWindow.document.write(html);
     printWindow.document.close();
   };
@@ -205,7 +257,7 @@ export default function OrdersPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-500">กำลังโหลดคำสั่งซื้อ...</p>
+          <p className="text-slate-500">กำลังโหลดข้อมูลคำสั่งซื้อ...</p>
         </div>
       </div>
     );
@@ -220,13 +272,13 @@ export default function OrdersPage() {
             <div>
               <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <span className="flex items-center gap-2">
-                    <span>📦 ติดตามคำสั่งซื้อของฉัน</span>
+                    <span>📦</span> การจัดส่งและคำสั่งซื้อ
                 </span>
               </h1>
-              <p className="text-xs text-slate-500 mt-1">คุณลูกค้า: {user?.name}</p>
+              <p className="text-xs text-slate-500 mt-1">ผู้ใช้: {user?.name}</p>
             </div>
             <Link href="/products" className="text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
-                <span className="text-lg">←</span> เลือกซื้อสินค้าเพิ่ม
+                <span className="text-lg">＋</span> เลือกซื้อสินค้าเพิ่ม
             </Link>
           </div>
         </div>
@@ -237,12 +289,12 @@ export default function OrdersPage() {
           /* Empty State */
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-16 text-center">
             <div className="text-6xl mb-4">🛒</div>
-            <h2 className="text-xl font-bold text-slate-800 mb-2">คุณยังไม่มีคำสั่งซื้อในระบบ</h2>
+            <h2 className="text-xl font-bold text-slate-800 mb-2">ยังไม่มีคำสั่งซื้อใดๆ</h2>
             <p className="text-slate-500 mb-8 max-w-sm mx-auto">
-               เริ่มค้นหาสินค้าและอุปกรณ์โซล่าเซลล์ที่เหมาะกับบ้านคุณได้เลย
+              คุณยังไม่เคยทำการสั่งซื้อสินค้ากับเรา เริ่มต้นสร้างระบบโซล่าเซลล์ของคุณได้เลยวันนี้
             </p>
-            <Link
-              href="/products"
+            <Link 
+              href="/products" 
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold transition-colors shadow-lg shadow-blue-600/20"
             >
               ดูแคตตาล็อกสินค้า
@@ -252,18 +304,19 @@ export default function OrdersPage() {
           /* Orders List */
           <div className="space-y-4">
             {orders.map((order, index) => {
-              const statusInfo = statusConfig[order.status] || statusConfig['ตรวจสอบ'];
+              const statusInfo = statusConfig[order.status] || statusConfig['รอชำระเงิน'];
               const isExpanded = expandedId === order.id;
+              
               const currentStepIdx = steps.findIndex(s => s.status === order.status || s.fallback === order.status);
 
               return (
-                <div
-                  key={order.id}
+                <div 
+                  key={order.id} 
                   className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md"
                   style={{ animation: `fadeSlideUp 0.4s ease-out ${index * 0.05}s both` }}
                 >
                   {/* Order Header (Clickable) */}
-                  <button
+                  <button 
                     onClick={() => toggleExpand(order.id)}
                     className="w-full px-6 py-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors text-left"
                   >
@@ -280,6 +333,7 @@ export default function OrdersPage() {
                         </p>
                       </div>
                     </div>
+                    
                     <div className="flex items-center gap-4">
                       <div className="text-right hidden sm:block">
                         <p className="font-bold text-slate-900 text-base">฿{order.total.toLocaleString()}</p>
@@ -300,7 +354,7 @@ export default function OrdersPage() {
                       {/* Order Tracking Stepper */}
                       <div className="mb-6 bg-slate-50/50 rounded-2xl p-5 border border-slate-100">
                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-1.5">
-                          <span>📍 สถานะการจัดส่ง</span>
+                          <span>📍</span> สถานะการจัดส่ง
                         </h4>
                         
                         <div className="space-y-6 relative">
@@ -318,7 +372,6 @@ export default function OrdersPage() {
                                 }`}>
                                   {step.icon}
                                 </div>
-
                                 <div className="flex-1 min-w-0">
                                   <p className={`text-sm font-bold transition-colors ${isActive ? 'text-blue-600' : isCompleted ? 'text-slate-800' : 'text-slate-400'}`}>{step.label}</p>
                                   <p className={`text-xs mt-0.5 transition-colors leading-relaxed ${isActive ? 'text-slate-600' : isCompleted ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -338,13 +391,13 @@ export default function OrdersPage() {
                           <p className="text-sm font-semibold text-slate-800">{order.shipping.fullName}</p>
                           <p className="text-xs text-slate-500 mt-1">เบอร์โทร: {order.shipping.phone}</p>
                           <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                            {order.shipping.address}, {order.shipping.subDistrict}, {order.shipping.district}, {order.shipping.province} {order.shipping.postalCode}
+                            {order.shipping.address}, แขวง{order.shipping.subDistrict}, เขต{order.shipping.district}, จ.{order.shipping.province} {order.shipping.postalCode}
                           </p>
                         </div>
                         <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                           <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-bold">การชำระเงิน</p>
                           <p className="text-sm font-semibold text-slate-800">
-                            {order.paymentMethod === 'credit_card' ? `บัตรเครดิต (*${order.cardLast4})` : 'QR PromptPay'}
+                            {order.paymentMethod === 'credit_card' ? `บัตรเครดิต (*${order.cardLast4})` : 'โอนเงิน (QR PromptPay)'}
                           </p>
                           <div className="mt-3 pt-3 border-t border-slate-200 space-y-1">
                             <div className="flex justify-between text-xs text-slate-500"><span>ยอดรวมสินค้า</span><span>฿{order.subtotal.toLocaleString()}</span></div>
@@ -373,17 +426,16 @@ export default function OrdersPage() {
                         </div>
                       </div>
 
-                      {/* 🖨️ ปุ่มพิมพ์ใบสั่งซื้อตรงนี้ */}
+                      {/* ปุ่มพิมพ์ใบเสร็จ */}
                       <div className="pt-4 border-t border-slate-100 flex justify-end">
                         <button 
                           onClick={(e) => handlePrintReceipt(order, e)}
                           className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold px-5 py-2.5 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                          พิมพ์ใบเสร็จ / ใบสั่งซื้อ
+                          ดาวน์โหลดใบเสร็จ / ใบกำกับภาษี
                         </button>
                       </div>
-
                     </div>
                   )}
                 </div>

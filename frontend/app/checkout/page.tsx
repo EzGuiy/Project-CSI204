@@ -7,6 +7,7 @@ import Link from 'next/link';
 // ==============================
 // Types
 // ==============================
+
 interface CartItem {
   id: string;
   name: string;
@@ -31,6 +32,64 @@ interface CardInfo {
   expiry: string;
   cvv: string;
 }
+
+// ==============================
+// 🇹🇭 ข้อมูล เขต -> แขวง -> รหัสไปรษณีย์ (กรุงเทพมหานคร ครบทั้ง 50 เขต)
+// ==============================
+const thaiProvinces: Record<string, Record<string, { subDistricts: string[]; zipCode: string }>> = {
+  "กรุงเทพมหานคร": {
+    "พระนคร": { subDistricts: ["พระบรมมหาราชวัง", "วังบูรพาภิรมย์", "วัดราชบพิธ", "สำราญราษฎร์", "ศาลเจ้าพ่อเสือ", "เสาชิงช้า", "บวรนิเวศ", "ตลาดยอด", "ชนะสงคราม", "บ้านพานถม", "บางขุนพรหม", "วัดสามพระยา"], zipCode: "10200" },
+    "ดุสิต": { subDistricts: ["ดุสิต", "วชิรพยาบาล", "สวนจิตรลดา", "สี่แยกมหานาค", "ถนนนครไชยศรี"], zipCode: "10300" },
+    "หนองจอก": { subDistricts: ["กระทุ่มราย", "หนองจอก", "คลองสิบ", "คลองสิบสอง", "โคกแฝด", "คู้ฝั่งเหนือ", "ลำผักชี", "ลำต้อยติ่ง"], zipCode: "10530" },
+    "บางรัก": { subDistricts: ["มหาพฤฒาราม", "สีลม", "สุริยวงศ์", "บางรัก", "สี่พระยา"], zipCode: "10500" },
+    "บางเขน": { subDistricts: ["อนุสาวรีย์", "ท่าแร้ง"], zipCode: "10220" },
+    "บางกะปิ": { subDistricts: ["คลองจั่น", "หัวหมาก"], zipCode: "10240" },
+    "ปทุมวัน": { subDistricts: ["รองเมือง", "วังใหม่", "ปทุมวัน", "ลุมพินี"], zipCode: "10330" },
+    "ป้อมปราบศัตรูพ่าย": { subDistricts: ["ป้อมปราบ", "วัดเทพศิรินทร์", "รองเมือง", "คลองมหานาค", "บ้านบาตร"], zipCode: "10100" },
+    "พระโขนง": { subDistricts: ["บางจาก", "พระโขนงใต้"], zipCode: "10260" },
+    "มีนบุรี": { subDistricts: ["มีนบุรี", "แสนแสบ"], zipCode: "10510" },
+    "ลาดกระบัง": { subDistricts: ["ลาดกระบัง", "คลองสองต้นนุ่น", "คลองสามประเวศ", "ลำปลาทิว", "ทับยาว", "ขุมทอง"], zipCode: "10520" },
+    "ยานนาวา": { subDistricts: ["ช่องนนทรี", "บางโพงพาง"], zipCode: "10120" },
+    "สัมพันธวงศ์": { subDistricts: ["จักรวรรดิ", "สัมพันธวงศ์", "ตลาดน้อย"], zipCode: "10100" },
+    "พญาไท": { subDistricts: ["สามเสนใน", "พญาไท"], zipCode: "10400" },
+    "ธนบุรี": { subDistricts: ["วัดกัลยาณ์", "หิรัญรูจี", "บางยี่เรือ", "บุคคโล", "ตลาดพลู", "ดาวคะนอง", "สำเหร่"], zipCode: "10600" },
+    "บางกอกใหญ่": { subDistricts: ["วัดอรุณ", "วัดท่าพระ"], zipCode: "10600" },
+    "ห้วยขวาง": { subDistricts: ["ห้วยขวาง", "บางกะปิ", "สามเสนนอก"], zipCode: "10310" },
+    "คลองสาน": { subDistricts: ["สมเด็จเจ้าพระยา", "คลองสาน", "บางลำภูล่าง", "คลองต้นไทร"], zipCode: "10600" },
+    "ตลิ่งชัน": { subDistricts: ["คลองชักพระ", "ตลิ่งชัน", "ฉิมพลี", "บางพรม", "บางระมาด", "บางเชือกหนัง"], zipCode: "10170" },
+    "บางกอกน้อย": { subDistricts: ["ศิริราช", "บ้านช่างหล่อ", "บางขุนนนท์", "บางขุนศรี", "อรุณอมรินทร์"], zipCode: "10700" },
+    "บางขุนเทียน": { subDistricts: ["ท่าข้าม", "แสมดำ"], zipCode: "10150" },
+    "ภาษีเจริญ": { subDistricts: ["บางหว้า", "บางด้วน", "บางจาก", "บางแวก", "คลองขวาง", "ปากคลองภาษีเจริญ", "คูหาสวรรค์"], zipCode: "10160" },
+    "หนองแขม": { subDistricts: ["หนองแขม", "หนองค้างพลู"], zipCode: "10160" },
+    "ราษฎร์บูรณะ": { subDistricts: ["ราษฎร์บูรณะ", "บางปะกอก"], zipCode: "10140" },
+    "บางพลัด": { subDistricts: ["บางพลัด", "บางบำหรุ", "บางอ้อ", "บางยี่ขัน"], zipCode: "10700" },
+    "ดินแดง": { subDistricts: ["ดินแดง", "รัชดาภิเษก"], zipCode: "10400" },
+    "บึงกุ่ม": { subDistricts: ["คลองกุ่ม", "นวลจันทร์", "นวลทอง"], zipCode: "10240" },
+    "สาทร": { subDistricts: ["ทุ่งวัดดอน", "ยานนาวา", "ทุ่งมหาเมฆ"], zipCode: "10120" },
+    "บางซื่อ": { subDistricts: ["บางซื่อ", "วงศ์สว่าง"], zipCode: "10800" },
+    "จตุจักร": { subDistricts: ["ลาดยาว", "เสนานิคม", "จันทรเกษม", "จตุจักร", "จอมพล"], zipCode: "10900" },
+    "บางคอแหลม": { subDistricts: ["บางคอแหลม", "วัดพระยาไกร", "บางโคล่"], zipCode: "10120" },
+    "ประเวศ": { subDistricts: ["ประเวศ", "หนองบอน", "ดอกไม้"], zipCode: "10250" },
+    "คลองเตย": { subDistricts: ["คลองเตย", "คลองตัน", "พระโขนง"], zipCode: "10110" },
+    "สวนหลวง": { subDistricts: ["สวนหลวง", "อ่อนนุช", "พัฒนาการ"], zipCode: "10250" },
+    "จอมทอง": { subDistricts: ["บางขุนเทียน", "บางค้อ", "บางมด", "จอมทอง"], zipCode: "10150" },
+    "ดอนเมือง": { subDistricts: ["สีกัน", "ดอนเมือง", "สนามบิน"], zipCode: "10210" },
+    "ราชเทวี": { subDistricts: ["ทุ่งพญาไท", "ถนนพญาไท", "ถนนเพชรบุรี", "มักกะสัน"], zipCode: "10400" },
+    "ลาดพร้าว": { subDistricts: ["ลาดพร้าว", "จรเข้บัว"], zipCode: "10230" },
+    "วัฒนา": { subDistricts: ["คลองเตยเหนือ", "คลองตันเหนือ", "พระโขนงเหนือ"], zipCode: "10110" },
+    "บางแค": { subDistricts: ["บางแค", "บางแคเหนือ", "บางไผ่", "หลักสอง"], zipCode: "10160" },
+    "หลักสี่": { subDistricts: ["ทุ่งสองห้อง", "ตลาดบางเขน"], zipCode: "10210" },
+    "สายไหม": { subDistricts: ["สายไหม", "ออเงิน", "คลองถนน"], zipCode: "10220" },
+    "คันนายาว": { subDistricts: ["คันนายาว", "รามอินทรา"], zipCode: "10230" },
+    "สะพานสูง": { subDistricts: ["สะพานสูง", "ราษฎร์พัฒนา", "ทับช้าง"], zipCode: "10240" },
+    "วังทองหลาง": { subDistricts: ["วังทองหลาง", "สะพานสอง", "คลองเจ้าคุณสิงห์", "พลับพลา"], zipCode: "10310" },
+    "คลองสามวา": { subDistricts: ["สามวาตะวันตก", "สามวาตะวันออก", "บางชัน", "ทรายกองดิน", "ทรายกองดินใต้"], zipCode: "10510" },
+    "บางนา": { subDistricts: ["บางนาเหนือ", "บางนาใต้"], zipCode: "10260" },
+    "ทวีวัฒนา": { subDistricts: ["ทวีวัฒนา", "ศาลาธรรมสพน์"], zipCode: "10170" },
+    "ทุ่งครุ": { subDistricts: ["บางมด", "ทุ่งครุ"], zipCode: "10140" },
+    "บางบอน": { subDistricts: ["บางบอนเหนือ", "บางบอนใต้", "คลองบางพราน", "คลองบางบอน"], zipCode: "10150" }
+  }
+};
 
 // ==============================
 // Helpers
@@ -138,7 +197,7 @@ export default function CheckoutPage() {
   // Shipping form
   const [shipping, setShipping] = useState<ShippingInfo>({
     fullName: '', phone: '', address: '',
-    subDistrict: '', district: '', province: '', postalCode: '',
+    subDistrict: '', district: '', province: '', postalCode: '', // เริ่มต้นให้ค่าว่างเพื่อให้บังคับเลือก
   });
 
   // Card form
@@ -174,14 +233,10 @@ export default function CheckoutPage() {
   }, [router]);
 
   // คำนวณยอดเงิน
-const subtotal = useMemo(() => cartItems.reduce((s, i) => s + i.price * i.quantity, 0), [cartItems]);
+  const subtotal = useMemo(() => cartItems.reduce((s, i) => s + i.price * i.quantity, 0), [cartItems]);
+  const shippingFee = 0; 
+  const total = subtotal + shippingFee;
 
-// 🌟 ต้องเป็นตัวเลข ไม่มีเครื่องหมายคำพูด
-const shippingFee = 0; // หรือถ้าอยากให้มีค่าจัดส่งก็ใส่เป็นตัวเลข เช่น 500
-// หรือถ้าเป็นแบบมีเงื่อนไขก็ต้องเป็นตัวเลขเช่นกัน:
-// const shippingFee = subtotal === 0 ? 0 : 500;
-
-const total = subtotal + shippingFee;
   // Card network
   const cardNetwork = useMemo(() => detectCardNetwork(card.number), [card.number]);
 
@@ -194,9 +249,9 @@ const total = subtotal + shippingFee;
     if (!shipping.phone.trim()) errors.phone = 'กรุณากรอกเบอร์โทร';
     else if (!/^0\d{8,9}$/.test(shipping.phone.replace(/-/g, ''))) errors.phone = 'รูปแบบเบอร์โทรไม่ถูกต้อง';
     if (!shipping.address.trim()) errors.address = 'กรุณากรอกที่อยู่';
-    if (!shipping.subDistrict.trim()) errors.subDistrict = 'กรุณากรอกตำบล/แขวง';
-    if (!shipping.district.trim()) errors.district = 'กรุณากรอกอำเภอ/เขต';
-    if (!shipping.province.trim()) errors.province = 'กรุณากรอกจังหวัด';
+    if (!shipping.subDistrict.trim()) errors.subDistrict = 'กรุณากรอกแขวง';
+    if (!shipping.district.trim()) errors.district = 'กรุณากรอกเขต';
+    if (!shipping.province.trim()) errors.province = 'กรุณาเลือกจังหวัด';
     if (!shipping.postalCode.trim()) errors.postalCode = 'กรุณากรอกรหัสไปรษณีย์';
     else if (!/^\d{5}$/.test(shipping.postalCode)) errors.postalCode = 'รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก';
     setShippingErrors(errors);
@@ -249,7 +304,6 @@ const total = subtotal + shippingFee;
         ]
       };
 
-      // 1. ส่งข้อมูลไปบันทึกที่ API เพื่อให้ข้อมูลไปอยู่ใน db.json (พนักงานจะได้เห็น)
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -261,16 +315,13 @@ const total = subtotal + shippingFee;
       const data = await response.json();
       const savedOrder = data.order; 
 
-      // 2. บันทึกลง LocalStorage ด้วย (เพื่อให้หน้า Success และ Tracking ของลูกค้ายังทำงานได้ตามเดิมก่อน)
       const existingOrders = JSON.parse(localStorage.getItem('solar_orders') || '[]');
       existingOrders.unshift(savedOrder);
       localStorage.setItem('solar_orders', JSON.stringify(existingOrders));
 
-      // 3. ล้างตะกร้า
       localStorage.removeItem('solar_cart');
       window.dispatchEvent(new Event('cartUpdated'));
 
-      // 4. เก็บ orderId ใน sessionStorage สำหรับดึงไปโชว์ในหน้า success
       sessionStorage.setItem('last_order_id', savedOrder.id);
 
       setIsProcessing(false);
@@ -370,7 +421,7 @@ const total = subtotal + shippingFee;
                   <h2 className="text-xl font-bold text-slate-900 mb-1 flex items-center gap-2">
                     <span className="text-2xl">📦</span> ข้อมูลการจัดส่ง
                   </h2>
-                  <p className="text-sm text-slate-500 mb-8">กรุณากรอกข้อมูลที่อยู่สำหรับจัดส่งสินค้า</p>
+                  <p className="text-sm text-slate-500 mb-8">กรุณากรอกข้อมูลที่อยู่สำหรับจัดส่งสินค้า (ให้บริการเฉพาะกรุงเทพมหานคร)</p>
 
                   <div className="space-y-5">
                     {/* ชื่อ + เบอร์โทร */}
@@ -412,53 +463,68 @@ const total = subtotal + shippingFee;
                       {shippingErrors.address && <p className="text-red-500 text-xs mt-1">{shippingErrors.address}</p>}
                     </div>
 
-                    {/* ตำบล + อำเภอ */}
+                    {/* 🌟 แถว 3: จังหวัด (Dropdown) และ เขต (Dropdown) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">ตำบล/แขวง *</label>
-                        <input
-                          type="text"
-                          value={shipping.subDistrict}
-                          onChange={e => setShipping({ ...shipping, subDistrict: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-lg border ${shippingErrors.subDistrict ? 'border-red-400 bg-red-50' : 'border-slate-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm`}
-                          placeholder="พระโขนงเหนือ"
-                        />
-                        {shippingErrors.subDistrict && <p className="text-red-500 text-xs mt-1">{shippingErrors.subDistrict}</p>}
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">จังหวัด *</label>
+                        <select
+                          value={shipping.province}
+                          onChange={e => setShipping({ ...shipping, province: e.target.value, district: '', subDistrict: '', postalCode: '' })}
+                          className={`w-full px-4 py-3 bg-white rounded-lg border ${shippingErrors.province ? 'border-red-400 bg-red-50' : 'border-slate-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm`}
+                        >
+                          <option value="">-- เลือกจังหวัด --</option>
+                          {Object.keys(thaiProvinces).map(prov => (
+                            <option key={prov} value={prov}>{prov}</option>
+                          ))}
+                        </select>
+                        {shippingErrors.province && <p className="text-red-500 text-xs mt-1">{shippingErrors.province}</p>}
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">อำเภอ/เขต *</label>
-                        <input
-                          type="text"
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">เขต *</label>
+                        <select
                           value={shipping.district}
-                          onChange={e => setShipping({ ...shipping, district: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-lg border ${shippingErrors.district ? 'border-red-400 bg-red-50' : 'border-slate-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm`}
-                          placeholder="วัฒนา"
-                        />
+                          onChange={e => {
+                            const selectedDistrict = e.target.value;
+                            const zip = selectedDistrict ? thaiProvinces[shipping.province]?.[selectedDistrict]?.zipCode || '' : '';
+                            setShipping({ ...shipping, district: selectedDistrict, subDistrict: '', postalCode: zip });
+                          }}
+                          disabled={!shipping.province}
+                          className={`w-full px-4 py-3 bg-white rounded-lg border ${shippingErrors.district ? 'border-red-400 bg-red-50' : 'border-slate-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`}
+                        >
+                          <option value="">-- เลือกเขต --</option>
+                          {shipping.province && Object.keys(thaiProvinces[shipping.province] || {}).map(dist => (
+                            <option key={dist} value={dist}>{dist}</option>
+                          ))}
+                        </select>
                         {shippingErrors.district && <p className="text-red-500 text-xs mt-1">{shippingErrors.district}</p>}
                       </div>
                     </div>
 
-                    {/* จังหวัด + รหัสไปรษณีย์ */}
+                    {/* 🌟 แถว 4: แขวง (Dropdown) และ รหัสไปรษณีย์ (Auto-fill) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">จังหวัด *</label>
-                        <input
-                          type="text"
-                          value={shipping.province}
-                          onChange={e => setShipping({ ...shipping, province: e.target.value })}
-                          className={`w-full px-4 py-3 rounded-lg border ${shippingErrors.province ? 'border-red-400 bg-red-50' : 'border-slate-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm`}
-                          placeholder="กรุงเทพมหานคร"
-                        />
-                        {shippingErrors.province && <p className="text-red-500 text-xs mt-1">{shippingErrors.province}</p>}
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">แขวง *</label>
+                        <select
+                          value={shipping.subDistrict}
+                          onChange={e => setShipping({ ...shipping, subDistrict: e.target.value })}
+                          disabled={!shipping.district}
+                          className={`w-full px-4 py-3 bg-white rounded-lg border ${shippingErrors.subDistrict ? 'border-red-400 bg-red-50' : 'border-slate-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed`}
+                        >
+                          <option value="">-- เลือกแขวง --</option>
+                          {shipping.province && shipping.district && thaiProvinces[shipping.province]?.[shipping.district]?.subDistricts.map(sub => (
+                            <option key={sub} value={sub}>{sub}</option>
+                          ))}
+                        </select>
+                        {shippingErrors.subDistrict && <p className="text-red-500 text-xs mt-1">{shippingErrors.subDistrict}</p>}
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">รหัสไปรษณีย์ *</label>
                         <input
                           type="text"
                           value={shipping.postalCode}
-                          onChange={e => setShipping({ ...shipping, postalCode: e.target.value.replace(/\D/g, '').slice(0, 5) })}
-                          className={`w-full px-4 py-3 rounded-lg border ${shippingErrors.postalCode ? 'border-red-400 bg-red-50' : 'border-slate-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm`}
-                          placeholder="10110"
+                          readOnly
+                          className="w-full px-4 py-3 rounded-lg border border-slate-300 bg-slate-100 text-slate-500 font-mono text-sm outline-none cursor-not-allowed"
+                          placeholder="รหัสไปรษณีย์อัตโนมัติ"
                         />
                         {shippingErrors.postalCode && <p className="text-red-500 text-xs mt-1">{shippingErrors.postalCode}</p>}
                       </div>
@@ -630,7 +696,6 @@ const total = subtotal + shippingFee;
                           </div>
                           {cardErrors.number && <p className="text-red-500 text-xs mt-1">{cardErrors.number}</p>}
                         </div>
-
                         <div>
                           <label className="block text-sm font-semibold text-slate-700 mb-1.5">ชื่อบนบัตร *</label>
                           <input
@@ -643,7 +708,6 @@ const total = subtotal + shippingFee;
                           />
                           {cardErrors.name && <p className="text-red-500 text-xs mt-1">{cardErrors.name}</p>}
                         </div>
-
                         <div className="grid grid-cols-2 gap-5">
                           <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5">วันหมดอายุ *</label>
@@ -749,7 +813,7 @@ const total = subtotal + shippingFee;
                     <div className="text-sm text-slate-600 space-y-1">
                       <p className="font-medium text-slate-800">{shipping.fullName} | {shipping.phone}</p>
                       <p>{shipping.address}</p>
-                      <p>{shipping.subDistrict}, {shipping.district}, {shipping.province} {shipping.postalCode}</p>
+                      <p>แขวง{shipping.subDistrict} เขต{shipping.district} จ.{shipping.province} {shipping.postalCode}</p>
                     </div>
                   </div>
 
@@ -853,7 +917,7 @@ const total = subtotal + shippingFee;
                       <p className="text-xs text-slate-400">จำนวน: {item.quantity}</p>
                     </div>
                     <p className="text-sm font-bold text-slate-800 shrink-0">
-                      ฿{(item.price * item.quantity).toLocaleString()}
+                       ฿{(item.price * item.quantity).toLocaleString()}
                     </p>
                   </div>
                 ))}

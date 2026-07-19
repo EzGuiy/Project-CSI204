@@ -176,7 +176,7 @@
         }
       ],
       "id": "ord-1783886824603",
-      "status": "รอชำระเงิน",
+      "status": "จัดส่งสำเร็จ",
       "createdAt": "2026-07-12T20:07:04.603Z"
     },
     {
@@ -254,8 +254,56 @@
         }
       ],
       "id": "ord-1783916255248",
-      "status": "ตรวจสอบ",
+      "status": "จัดส่งสำเร็จ",
       "createdAt": "2026-07-13T04:17:35.248Z"
+    },
+    {
+      "userId": "u3",
+      "date": "2026-07-19T15:16:54.810Z",
+      "items": [
+        {
+          "id": "1",
+          "name": "Jinko Solar Tiger Pro 550W",
+          "price": 10,
+          "quantity": 1,
+          "icon": "/Jiinko_550w.jpg",
+          "stock": 1
+        },
+        {
+          "id": "3",
+          "name": "Huawei SUN2000-5KTL",
+          "price": 28500,
+          "quantity": 5,
+          "icon": "/OIP(1).jpg",
+          "stock": 5
+        }
+      ],
+      "subtotal": 142510,
+      "shippingFee": 0,
+      "total": 142510,
+      "shipping": {
+        "fullName": "คุณลูกค้า สมชาย",
+        "phone": "0934954851",
+        "address": "123",
+        "subDistrict": "บางบอนใต้",
+        "district": "บางบอน",
+        "province": "กรุงเทพมหานคร",
+        "postalCode": "10150"
+      },
+      "paymentMethod": "credit_card",
+      "cardLast4": "4444",
+      "cardNetwork": "mastercard",
+      "statusHistory": [
+        {
+          "status": "ตรวจสอบ",
+          "label": "ยืนยันคำสั่งซื้อ",
+          "date": "2026-07-19T15:16:54.813Z",
+          "note": "ระบบได้รับคำสั่งซื้อของคุณแล้ว"
+        }
+      ],
+      "id": "ord-1784474214853",
+      "status": "จัดส่งสำเร็จ",
+      "createdAt": "2026-07-19T15:16:54.853Z"
     }
   ],
   "chats": [
@@ -393,6 +441,24 @@
       "sender": "user",
       "text": "อาโล",
       "timestamp": "12:00",
+      "isRead": true
+    },
+    {
+      "id": "msg-1784469137217-admin",
+      "chatId": "INTERNAL_ROOM",
+      "senderName": "วิศวกร สมศักดิ์",
+      "sender": "admin",
+      "text": "หวัดดีครับ",
+      "timestamp": "20:52",
+      "isRead": true
+    },
+    {
+      "id": "msg-1784469181987-employee",
+      "chatId": "INTERNAL_ROOM",
+      "senderName": "พนักงาน ประจำร้าน",
+      "sender": "employee",
+      "text": "หวัดดีควยไร",
+      "timestamp": "20:53",
       "isRead": true
     }
   ]

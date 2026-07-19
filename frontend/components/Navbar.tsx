@@ -13,15 +13,38 @@ export default function Navbar() {
 
   useEffect(() => {
    const userData = localStorage.getItem('solar_session');
-    if (userData) setUser(JSON.parse(userData));
-  }, [pathname]);
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+
+      // 🌟 ล็อกสิทธิ์: ถ้าเป็นแอดมิน ให้บังคับไปที่หน้า Dashboard ของแอดมินเท่านั้น
+      if (parsedUser.role === 'admin' && !pathname.startsWith('/admin')) {
+        router.push('/admin/dashboard');
+      }
+      // 🌟 ล็อกสิทธิ์: ถ้าเป็นพนักงาน ให้บังคับไปที่หน้า Dashboard ของพนักงานเท่านั้น
+      else if (parsedUser.role === 'employee' && !pathname.startsWith('/dashboard')) {
+        router.push('/dashboard');
+      }
+    } else {
+      setUser(null);
+    }
+  }, [pathname, router]);
 
   const handleLogout = () => {
-  localStorage.removeItem('solar_session');
+    localStorage.removeItem('solar_session');
     setUser(null);
     router.push('/login');
   };
-  if (pathname === '/login' || pathname === '/register') return null;
+
+  // 🌟 ซ่อน Navbar ในหน้าล็อกอิน, สมัครสมาชิก, และหน้าแดชบอร์ด (แอดมิน/พนักงาน)
+  if (
+    pathname === '/login' || 
+    pathname === '/register' || 
+    pathname.startsWith('/admin') || 
+    pathname.startsWith('/dashboard')
+  ) {
+    return null;
+  }
 
   return (
     <nav className="bg-[#0f172a] text-white border-b border-slate-800 sticky top-0 z-50">
