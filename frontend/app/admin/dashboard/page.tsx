@@ -197,11 +197,13 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
-      localStorage.removeItem('solar_session');
-      window.location.href = '/login';
-    }
-  };
+  if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+    localStorage.removeItem('solar_session');
+    
+    // 🌟 เปลี่ยนให้กลับไปหน้าหลัก
+    window.location.href = '/'; 
+  }
+};
 
   if (!isAdmin) return null;
 

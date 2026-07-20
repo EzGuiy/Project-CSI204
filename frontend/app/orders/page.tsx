@@ -37,15 +37,19 @@ interface Order {
   statusHistory?: { status: string; label: string; date: string; note: string }[];
 }
 
+// 🌟 เพิ่มสถานะ 'ยกเลิกแล้ว'
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   'รอชำระเงิน': { label: 'รอชำระเงิน', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
   'ตรวจสอบ': { label: 'ตรวจสอบ', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
   'กำลังจัดส่ง': { label: 'กำลังจัดส่ง', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
   'จัดส่งสำเร็จ': { label: 'จัดส่งสำเร็จ', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+  'ยกเลิกแล้ว': { label: 'ยกเลิกแล้ว', color: 'text-red-700', bg: 'bg-red-50 border-red-200' },
+  // Fallbacks เผื่อเป็นภาษาอังกฤษ
   'confirmed': { label: 'ยืนยันคำสั่งซื้อ', color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
   'processing': { label: 'กำลังดำเนินการ', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
   'shipped': { label: 'กำลังจัดส่ง', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200' },
   'delivered': { label: 'จัดส่งสำเร็จ', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+  'cancelled': { label: 'ยกเลิกแล้ว', color: 'text-red-700', bg: 'bg-red-50 border-red-200' },
 };
 
 const steps = [
@@ -60,10 +64,8 @@ export default function OrdersPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
-  // 🌟 ใช้ useRef เก็บค่า order ล่าสุด เพื่อให้ setInterval ทำงานได้ถูกต้อง
   const ordersRef = useRef<Order[]>([]);
 
-  // อัปเดต ordersRef ทุกครั้งที่ orders เปลี่ยนแปลง
   useEffect(() => {
     ordersRef.current = orders;
   }, [orders]);
@@ -94,22 +96,21 @@ export default function OrdersPage() {
 
     fetchMyOrders();
 
-    // 🌟 ระบบขยับสถานะอัตโนมัติ และ ดึงข้อมูลใหม่ทุกๆ 10 วินาที
+    // ระบบขยับสถานะอัตโนมัติ ทุกๆ 10 วินาที
     const intervalId = setInterval(async () => {
       let hasChanges = false;
 
-      // 1. วนลูปเช็คออเดอร์ในหน้าจอปัจจุบัน
       for (const order of ordersRef.current) {
+        // 🌟 ถ้าออเดอร์ถูกยกเลิกไปแล้ว ให้ข้าม ไม่ต้องเลื่อนสถานะต่อ
+        if (order.status === 'ยกเลิกแล้ว' || order.status === 'cancelled') continue;
+
         let nextStatus = null;
-        
-        // กฎการเปลี่ยนสถานะ: รอชำระเงิน/ตรวจสอบ -> กำลังจัดส่ง -> จัดส่งสำเร็จ
         if (order.status === 'รอชำระเงิน' || order.status === 'ตรวจสอบ') {
           nextStatus = 'กำลังจัดส่ง';
         } else if (order.status === 'กำลังจัดส่ง' || order.status === 'shipped') {
           nextStatus = 'จัดส่งสำเร็จ';
         }
 
-        // ถ้ามีสถานะถัดไป ให้ส่ง API ไปอัปเดต
         if (nextStatus) {
           try {
             await fetch('/api/orders', {
@@ -124,10 +125,11 @@ export default function OrdersPage() {
         }
       }
 
-      // 2. โหลดข้อมูลมาแสดงใหม่ (เพื่อให้หน้าจอเปลี่ยนตาม)
-      fetchMyOrders();
+      if (hasChanges) {
+        fetchMyOrders();
+      }
       
-    }, 10000); // รันทุก 10 วินาที
+    }, 10000); 
 
     return () => clearInterval(intervalId);
   }, []);
@@ -136,10 +138,53 @@ export default function OrdersPage() {
     setExpandedId(expandedId === id ? null : id);
   };
 
+  // 🌟 ฟังก์ชันยกเลิกคำสั่งซื้อ
+  const handleCancelOrder = async (order: Order, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // ยืนยันการยกเลิก
+    if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำสั่งซื้อนี้?\n\n*หมายเหตุ: เมื่อยกเลิกแล้วจะไม่สามารถกู้คืนได้')) {
+      return;
+    }
+
+    try {
+      // 1. เปลี่ยนสถานะออเดอร์เป็น 'ยกเลิกแล้ว'
+      await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id, status: 'ยกเลิกแล้ว' })
+      });
+
+      // 2. คืนจำนวนสต๊อกสินค้ากลับไปที่หลังบ้าน
+      for (const item of order.items) {
+        await fetch('/api/products', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          // ส่งค่าบวก (+) กลับไป เพื่อเพิ่มสต๊อกคืน
+          body: JSON.stringify({ id: item.id, amount: item.quantity })
+        });
+      }
+
+      // 3. อัปเดตหน้าจอทันทีโดยไม่ต้องรอ Fetch ใหม่
+      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'ยกเลิกแล้ว' } : o));
+      alert('ยกเลิกคำสั่งซื้อเรียบร้อยแล้ว ระบบได้ทำการคืนสต๊อกสินค้าเข้าคลังแล้วครับ');
+
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      alert('เกิดข้อผิดพลาดในการยกเลิกคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง');
+    }
+  };
+
   // ฟังก์ชันพิมพ์ใบเสร็จ
   const handlePrintReceipt = (order: Order, e: React.MouseEvent) => {
     e.stopPropagation(); 
     
+    // ถ้ายกเลิกแล้ว ไม่ควรให้พิมพ์ใบเสร็จ
+    if (order.status === 'ยกเลิกแล้ว' || order.status === 'cancelled') {
+        alert('ไม่สามารถพิมพ์ใบเสร็จได้เนื่องจากคำสั่งซื้อนี้ถูกยกเลิกแล้ว');
+        return;
+    }
+
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       alert('โปรดอนุญาต Pop-up บนเบราว์เซอร์ของคุณเพื่อพิมพ์ใบเสร็จ');
@@ -272,7 +317,7 @@ export default function OrdersPage() {
             <div>
               <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                 <span className="flex items-center gap-2">
-                    <span>📦</span> การจัดส่งและคำสั่งซื้อ
+                    <span>📦</span> ประวัติคำสั่งซื้อของฉัน
                 </span>
               </h1>
               <p className="text-xs text-slate-500 mt-1">ผู้ใช้: {user?.name}</p>
@@ -308,11 +353,12 @@ export default function OrdersPage() {
               const isExpanded = expandedId === order.id;
               
               const currentStepIdx = steps.findIndex(s => s.status === order.status || s.fallback === order.status);
+              const isCancelled = order.status === 'ยกเลิกแล้ว' || order.status === 'cancelled';
 
               return (
                 <div 
                   key={order.id} 
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md"
+                  className={`bg-white rounded-2xl border ${isCancelled ? 'border-red-200' : 'border-slate-200'} shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md`}
                   style={{ animation: `fadeSlideUp 0.4s ease-out ${index * 0.05}s both` }}
                 >
                   {/* Order Header (Clickable) */}
@@ -321,12 +367,12 @@ export default function OrdersPage() {
                     className="w-full px-6 py-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors text-left"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
-                        {order.paymentMethod === 'credit_card' ? <span className="text-xl">💳</span> : <span className="text-xl">🏦</span>}
+                      <div className={`w-12 h-12 ${isCancelled ? 'bg-red-50 text-red-500' : 'bg-slate-100'} rounded-xl flex items-center justify-center shrink-0`}>
+                        {isCancelled ? <span className="text-xl">❌</span> : (order.paymentMethod === 'credit_card' ? <span className="text-xl">💳</span> : <span className="text-xl">🏦</span>)}
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-bold text-slate-900 text-sm font-mono tracking-wide">{order.id}</p>
+                          <p className={`font-bold text-sm font-mono tracking-wide ${isCancelled ? 'text-slate-500 line-through' : 'text-slate-900'}`}>{order.id}</p>
                         </div>
                         <p className="text-[11px] text-slate-400 mt-1">
                           {new Date(order.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -336,12 +382,12 @@ export default function OrdersPage() {
                     
                     <div className="flex items-center gap-4">
                       <div className="text-right hidden sm:block">
-                        <p className="font-bold text-slate-900 text-base">฿{order.total.toLocaleString()}</p>
+                        <p className={`font-bold text-base ${isCancelled ? 'text-slate-400 line-through' : 'text-slate-900'}`}>฿{order.total.toLocaleString()}</p>
                         <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full border ${statusInfo.bg} ${statusInfo.color} mt-1.5`}>
                           {statusInfo.label}
                         </span>
                       </div>
-                      <svg className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className={`w-5 h-5 ${isCancelled ? 'text-red-300' : 'text-slate-400'} transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
                       </svg>
                     </div>
@@ -349,93 +395,117 @@ export default function OrdersPage() {
 
                   {/* Expandable Content */}
                   {isExpanded && (
-                    <div className="px-6 pb-6 border-t border-slate-100 pt-6 animate-accordionOpen">
+                    <div className={`px-6 pb-6 border-t ${isCancelled ? 'border-red-100' : 'border-slate-100'} pt-6 animate-accordionOpen`}>
                       
-                      {/* Order Tracking Stepper */}
-                      <div className="mb-6 bg-slate-50/50 rounded-2xl p-5 border border-slate-100">
-                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-1.5">
-                          <span>📍</span> สถานะการจัดส่ง
-                        </h4>
-                        
-                        <div className="space-y-6 relative">
-                          {steps.map((step, idx) => {
-                            const isCompleted = idx <= currentStepIdx;
-                            const isActive = idx === currentStepIdx;
-                            const isLast = idx === steps.length - 1;
-
-                            return (
-                              <div key={step.status} className="flex gap-4 relative">
-                                {!isLast && <div className={`absolute left-5 top-10 bottom-[-16px] w-[2px] transition-colors duration-500 ${idx < currentStepIdx ? 'bg-emerald-500' : 'bg-slate-200'}`} />}
-                                
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg z-10 border-2 transition-all duration-500 ${
-                                  isActive ? 'bg-blue-600 border-blue-600 text-white ring-4 ring-blue-100 scale-110' : isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-200 text-slate-400'
-                                }`}>
-                                  {step.icon}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className={`text-sm font-bold transition-colors ${isActive ? 'text-blue-600' : isCompleted ? 'text-slate-800' : 'text-slate-400'}`}>{step.label}</p>
-                                  <p className={`text-xs mt-0.5 transition-colors leading-relaxed ${isActive ? 'text-slate-600' : isCompleted ? 'text-slate-500' : 'text-slate-400'}`}>
-                                    {step.desc}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          })}
+                      {/* 🌟 แสดงแบบพิเศษกรณีลูกค้ายกเลิกคำสั่งซื้อ */}
+                      {isCancelled ? (
+                        <div className="mb-6 bg-red-50 rounded-2xl p-8 border border-red-100 text-center">
+                          <div className="w-16 h-16 bg-white text-red-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 shadow-sm border border-red-100">❌</div>
+                          <h4 className="text-lg font-bold text-red-700 mb-2">คำสั่งซื้อถูกยกเลิกแล้ว</h4>
+                          <p className="text-sm text-red-500/80">ระบบได้ทำการคืนสต๊อกสินค้าเข้าคลังเรียบร้อยแล้ว ขออภัยในความไม่สะดวกครับ</p>
                         </div>
-                      </div>
+                      ) : (
+                        /* Order Tracking Stepper (แสดงปกติ) */
+                        <div className="mb-6 bg-slate-50/50 rounded-2xl p-5 border border-slate-100">
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-1.5">
+                            <span>📍</span> สถานะการจัดส่ง
+                          </h4>
+                          
+                          <div className="space-y-6 relative">
+                            {steps.map((step, idx) => {
+                              const isCompleted = idx <= currentStepIdx;
+                              const isActive = idx === currentStepIdx;
+                              const isLast = idx === steps.length - 1;
+
+                              return (
+                                <div key={step.status} className="flex gap-4 relative">
+                                  {!isLast && <div className={`absolute left-5 top-10 bottom-[-16px] w-[2px] transition-colors duration-500 ${idx < currentStepIdx ? 'bg-emerald-500' : 'bg-slate-200'}`} />}
+                                  
+                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg z-10 border-2 transition-all duration-500 ${
+                                    isActive ? 'bg-blue-600 border-blue-600 text-white ring-4 ring-blue-100 scale-110' : isCompleted ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-200 text-slate-400'
+                                  }`}>
+                                    {step.icon}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className={`text-sm font-bold transition-colors ${isActive ? 'text-blue-600' : isCompleted ? 'text-slate-800' : 'text-slate-400'}`}>{step.label}</p>
+                                    <p className={`text-xs mt-0.5 transition-colors leading-relaxed ${isActive ? 'text-slate-600' : isCompleted ? 'text-slate-500' : 'text-slate-400'}`}>
+                                      {step.desc}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       {/* General Order Details Grid */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                        <div className={`${isCancelled ? 'bg-white' : 'bg-slate-50'} rounded-xl p-4 border ${isCancelled ? 'border-red-100 opacity-70' : 'border-slate-100'}`}>
                           <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-bold">ที่อยู่จัดส่ง</p>
-                          <p className="text-sm font-semibold text-slate-800">{order.shipping.fullName}</p>
+                          <p className={`text-sm font-semibold ${isCancelled ? 'text-slate-600' : 'text-slate-800'}`}>{order.shipping.fullName}</p>
                           <p className="text-xs text-slate-500 mt-1">เบอร์โทร: {order.shipping.phone}</p>
                           <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                             {order.shipping.address}, แขวง{order.shipping.subDistrict}, เขต{order.shipping.district}, จ.{order.shipping.province} {order.shipping.postalCode}
                           </p>
                         </div>
-                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                        <div className={`${isCancelled ? 'bg-white' : 'bg-slate-50'} rounded-xl p-4 border ${isCancelled ? 'border-red-100 opacity-70' : 'border-slate-100'}`}>
                           <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-bold">การชำระเงิน</p>
-                          <p className="text-sm font-semibold text-slate-800">
+                          <p className={`text-sm font-semibold ${isCancelled ? 'text-slate-600' : 'text-slate-800'}`}>
                             {order.paymentMethod === 'credit_card' ? `บัตรเครดิต (*${order.cardLast4})` : 'โอนเงิน (QR PromptPay)'}
                           </p>
                           <div className="mt-3 pt-3 border-t border-slate-200 space-y-1">
                             <div className="flex justify-between text-xs text-slate-500"><span>ยอดรวมสินค้า</span><span>฿{order.subtotal.toLocaleString()}</span></div>
                             <div className="flex justify-between text-xs text-slate-500"><span>ค่าจัดส่ง</span><span>{order.shippingFee === 0 ? 'ฟรี' : `฿${order.shippingFee.toLocaleString()}`}</span></div>
-                            <div className="flex justify-between text-sm font-bold text-slate-800 pt-1.5 border-t border-dashed border-slate-200"><span>ยอดชำระทั้งหมด</span><span className="text-blue-600">฿{order.total.toLocaleString()}</span></div>
+                            <div className="flex justify-between text-sm font-bold text-slate-800 pt-1.5 border-t border-dashed border-slate-200"><span>ยอดชำระทั้งหมด</span><span className={`${isCancelled ? 'text-slate-500' : 'text-blue-600'}`}>฿{order.total.toLocaleString()}</span></div>
                           </div>
                         </div>
                       </div>
 
                       {/* Items Details */}
-                      <div className="mb-4">
+                      <div className={`mb-4 ${isCancelled ? 'opacity-70' : ''}`}>
                         <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-3 font-bold">รายการสินค้า ({order.items.reduce((s, i) => s + i.quantity, 0)} ชิ้น)</p>
                         <div className="space-y-2">
                           {order.items.map(item => (
-                            <div key={item.id} className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <div key={item.id} className={`flex items-center gap-3 ${isCancelled ? 'bg-white border-red-100' : 'bg-slate-50 border-slate-100'} p-3 rounded-xl border`}>
                               <div className="w-11 h-11 bg-white rounded-lg border border-slate-200 flex items-center justify-center p-1 shrink-0">
-                                <img src={item.icon} alt={item.name} className="w-full h-full object-contain" />
+                                <img src={item.icon} alt={item.name} className={`w-full h-full object-contain ${isCancelled ? 'grayscale opacity-50' : ''}`} />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-slate-800 truncate">{item.name}</p>
+                                <p className={`text-sm font-semibold truncate ${isCancelled ? 'text-slate-600 line-through' : 'text-slate-800'}`}>{item.name}</p>
                                 <p className="text-xs text-slate-400">฿{item.price.toLocaleString()} x {item.quantity}</p>
                               </div>
-                              <p className="text-sm font-bold text-slate-700 shrink-0">฿{(item.price * item.quantity).toLocaleString()}</p>
+                              <p className={`text-sm font-bold shrink-0 ${isCancelled ? 'text-slate-500' : 'text-slate-700'}`}>฿{(item.price * item.quantity).toLocaleString()}</p>
                             </div>
                           ))}
                         </div>
                       </div>
 
-                      {/* ปุ่มพิมพ์ใบเสร็จ */}
-                      <div className="pt-4 border-t border-slate-100 flex justify-end">
-                        <button 
-                          onClick={(e) => handlePrintReceipt(order, e)}
-                          className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold px-5 py-2.5 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                          ดาวน์โหลดใบเสร็จ / ใบกำกับภาษี
-                        </button>
+                      {/* 🌟 ปุ่มดำเนินการ (ยกเลิก และ พิมพ์ใบเสร็จ) */}
+                      <div className={`pt-4 border-t ${isCancelled ? 'border-red-100' : 'border-slate-100'} flex flex-col sm:flex-row justify-between items-center gap-3`}>
+                        <div className="w-full sm:w-auto">
+                          {/* ปุ่มยกเลิก จะแสดงก็ต่อเมื่อยังอยู่ในสถานะ เริ่มต้น และยังไม่ถูกยกเลิก */}
+                          {!isCancelled && (order.status === 'รอชำระเงิน' || order.status === 'ตรวจสอบ') && (
+                            <button 
+                              onClick={(e) => handleCancelOrder(order, e)}
+                              className="w-full sm:w-auto text-red-500 hover:text-red-700 bg-white hover:bg-red-50 border border-red-200 text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
+                            >
+                              ยกเลิกคำสั่งซื้อ
+                            </button>
+                          )}
+                        </div>
+
+                        {!isCancelled && (
+                          <button 
+                            onClick={(e) => handlePrintReceipt(order, e)}
+                            className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-sm"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                            ดาวน์โหลดใบเสร็จ / ใบกำกับภาษี
+                          </button>
+                        )}
                       </div>
+
                     </div>
                   )}
                 </div>

@@ -30,11 +30,14 @@ export default function Navbar() {
     }
   }, [pathname, router]);
 
-  const handleLogout = () => {
+ const handleLogout = () => {
+  if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
     localStorage.removeItem('solar_session');
-    setUser(null);
-    router.push('/login');
-  };
+    
+    // 🌟 เปลี่ยนให้กลับไปหน้าหลัก
+    window.location.href = '/'; 
+  }
+};
 
   // 🌟 ซ่อน Navbar ในหน้าล็อกอิน, สมัครสมาชิก, และหน้าแดชบอร์ด (แอดมิน/พนักงาน)
   if (
