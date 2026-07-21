@@ -278,7 +278,8 @@
 
 แผนภาพแสดงลำดับขั้นตอนการทำงานและการรับส่งข้อมูล (Message Interaction Flow) ระหว่าง Frontend, Backend และฐานข้อมูล SQL ในฟังก์ชันหลักที่สำคัญ ได้แก่:
 
-> <img width="1270" height="1289" alt="S__43106320" src="https://github.com/user-attachments/assets/c9003bae-5955-4bb1-89d5-b4e967faf5b3" style="display: block; margin: 0 auto;" />
+<img width="2590" height="1980" alt="seque" src="https://github.com/user-attachments/assets/5e6f3873-cf64-44a0-ad7c-76f8bcf46a0b" />
+
 
 ---
 
