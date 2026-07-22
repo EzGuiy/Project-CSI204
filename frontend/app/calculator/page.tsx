@@ -13,6 +13,9 @@ export default function CalculatorPage() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
 
+  // 🚫 ตรวจสอบค่าไฟขั้นต่ำ: ถ้าต่ำกว่า 500 บาท ไม่คุ้มค่าที่จะติดตั้งโซล่าเซลล์
+  const isBelowMinimum = monthlyBill < 500;
+
   // --- 🧠 Logic การคำนวณโซล่าเซลล์อ้างอิงเรทราคาและผลตอบแทนปัจจุบัน ---
   // ประเมินขนาด kW ที่เหมาะสมจากฐานค่าไฟ (ปรับให้อิงการประหยัดตามเรทที่คุณให้มา)
   const recommendedKw = monthlyBill / 550; 
@@ -249,31 +252,44 @@ export default function CalculatorPage() {
             <div className="p-8 flex-grow flex flex-col justify-center">
               <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">ผลการประเมินเบื้องต้น</h3>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 text-center">
-                  <div className="text-blue-500 mb-1 text-2xl">⚡</div>
-                  <p className="text-slate-600 text-xs mb-1 font-bold">ขนาดระบบที่แนะนำ</p>
-                  <p className="text-2xl font-black text-blue-700">{displayKw} <span className="text-base font-medium">kW</span></p>
+              {isBelowMinimum ? (
+                /* 🚫 แสดงข้อความเตือนเมื่อค่าไฟต่ำกว่า 500 บาท */
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
+                  <div className="text-5xl mb-4">⚠️</div>
+                  <h4 className="text-lg font-bold text-amber-700 mb-2">ค่าไฟรายเดือนต่ำกว่าเกณฑ์ขั้นต่ำ</h4>
+                  <p className="text-amber-600 text-sm leading-relaxed">
+                    ระบบไม่สามารถประเมินได้ เนื่องจากค่าไฟรายเดือนต่ำกว่า <strong>500 บาท</strong><br />
+                    การติดตั้งระบบโซล่าเซลล์อาจไม่คุ้มค่ากับการลงทุน<br />
+                    กรุณากรอกค่าไฟเฉลี่ยรายเดือนตั้งแต่ 500 บาทขึ้นไป
+                  </p>
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 text-center">
+                    <div className="text-blue-500 mb-1 text-2xl">⚡</div>
+                    <p className="text-slate-600 text-xs mb-1 font-bold">ขนาดระบบที่แนะนำ</p>
+                    <p className="text-2xl font-black text-blue-700">{displayKw} <span className="text-base font-medium">kW</span></p>
+                  </div>
 
-                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-center">
-                  <div className="text-slate-500 mb-1 text-2xl">☀️</div>
-                  <p className="text-slate-600 text-xs mb-1 font-bold">แผงโซล่าเซลล์ (550W)</p>
-                  <p className="text-2xl font-black text-slate-800">{panelsNeeded} <span className="text-base font-medium">แผง</span></p>
-                </div>
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-center">
+                    <div className="text-slate-500 mb-1 text-2xl">☀️</div>
+                    <p className="text-slate-600 text-xs mb-1 font-bold">แผงโซล่าเซลล์ (550W)</p>
+                    <p className="text-2xl font-black text-slate-800">{panelsNeeded} <span className="text-base font-medium">แผง</span></p>
+                  </div>
 
-                <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 text-center">
-                  <div className="text-emerald-500 mb-1 text-2xl">💰</div>
-                  <p className="text-slate-600 text-xs mb-1 font-bold">ประหยัดค่าไฟได้ประมาณ</p>
-                  <p className="text-2xl font-black text-emerald-600">{(monthlyBill).toLocaleString()} <span className="text-base font-medium">บาท/ด.</span></p>
-                </div>
+                  <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 text-center">
+                    <div className="text-emerald-500 mb-1 text-2xl">💰</div>
+                    <p className="text-slate-600 text-xs mb-1 font-bold">ประหยัดค่าไฟได้ประมาณ</p>
+                    <p className="text-2xl font-black text-emerald-600">{(monthlyBill).toLocaleString()} <span className="text-base font-medium">บาท/ด.</span></p>
+                  </div>
 
-                <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 text-center">
-                  <div className="text-amber-500 mb-1 text-2xl">⏳</div>
-                  <p className="text-slate-600 text-xs mb-1 font-bold">ระยะเวลาคืนทุน</p>
-                  <p className="text-2xl font-black text-amber-600">{roiYears} <span className="text-base font-medium">ปี</span></p>
+                  <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 text-center">
+                    <div className="text-amber-500 mb-1 text-2xl">⏳</div>
+                    <p className="text-slate-600 text-xs mb-1 font-bold">ระยะเวลาคืนทุน</p>
+                    <p className="text-2xl font-black text-amber-600">{roiYears} <span className="text-base font-medium">ปี</span></p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -328,10 +344,11 @@ export default function CalculatorPage() {
 
             <button 
               onClick={handlePrintQuotation}
-              className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-4 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 text-base mt-4"
+              disabled={isBelowMinimum}
+              className={`w-full font-bold py-4 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 text-base mt-4 ${isBelowMinimum ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-slate-900 hover:bg-blue-600 text-white'}`}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-              พิมพ์ใบเสนอราคาระบบ {displayKw} kW
+              {isBelowMinimum ? 'กรุณากรอกค่าไฟตั้งแต่ 500 บาทขึ้นไป' : `พิมพ์ใบเสนอราคาระบบ ${displayKw} kW`}
             </button>
           </div>
 

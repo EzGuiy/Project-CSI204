@@ -33,10 +33,12 @@ export default function CartPage() {
             parsedCart = parsedCart.map(item => {
               const product = products.find((p: any) => p.id === item.id);
               const currentStock = product ? product.stock : 0;
+              // 🌟 ดึงราคาล่าสุดจาก API เพื่อซิงค์กรณีแอดมินแก้ไขราคาสินค้า
+              const currentPrice = product ? product.price : item.price;
               
               // 🌟 ป้องกันกรณีตะกร้ามีจำนวนมากกว่าสต๊อกจริง ให้ปรับลดลงมาเท่าสต๊อก
               const validQuantity = Math.min(item.quantity, currentStock);
-              return { ...item, stock: currentStock, quantity: validQuantity };
+              return { ...item, price: currentPrice, stock: currentStock, quantity: validQuantity };
             });
             // อัปเดตตะกร้าใหม่ให้จำนวนถูกต้อง
             localStorage.setItem('solar_cart', JSON.stringify(parsedCart));
