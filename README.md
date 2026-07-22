@@ -262,7 +262,8 @@
 
 แผนภาพแสดงความสัมพันธ์และพฤติกรรมการใช้งานระบบ SolarTech ของผู้ใช้ทั้ง 3 กลุ่ม (Customer, Staff, Admin):
 
-> <img width="1427" height="1431" alt="Use Case Diagram pj drawio" src="https://github.com/user-attachments/assets/bf3abebe-08a5-44e6-8526-01c498b4549a" style="display: block; margin: 0 auto;" />
+> <img width="1427" height="1392" alt="Use_Case_Diagram2" src="https://github.com/user-attachments/assets/549a7ac1-59c6-461b-afa8-7bd54a19523f" />
+
 
 ---
 
@@ -270,7 +271,8 @@
 
 แผนภาพแสดงโครงสร้างข้อมูล คลาส (Classes) และความสัมพันธ์ของวัตถุต่าง ๆ ภายในระบบ เช่น ข้อมูลสิทธิ์ บัญชีผู้ใช้ สินค้า ตะกร้าสินค้า และข้อมูลการสั่งซื้อ:
 
-> <img width="1548" height="1058" alt="S__43106319" src="https://github.com/user-attachments/assets/6c256935-3b76-48b3-ab23-e5d5a681715a" style="display: block; margin: 0 auto;" />
+> <img width="1569" height="1569" alt="Class" src="https://github.com/user-attachments/assets/d897da66-04dc-4231-997f-e863f087f70f" />
+
 
 ---
 
@@ -278,7 +280,8 @@
 
 แผนภาพแสดงลำดับขั้นตอนการทำงานและการรับส่งข้อมูล (Message Interaction Flow) ระหว่าง Frontend, Backend  ในฟังก์ชันหลักที่สำคัญ ได้แก่:
 
-<img width="2590" height="1980" alt="seque" src="https://github.com/user-attachments/assets/5e6f3873-cf64-44a0-ad7c-76f8bcf46a0b" />
+<img width="2590" height="1980" alt="Seque_2" src="https://github.com/user-attachments/assets/faf44519-9f85-4941-a2e8-56324ace9f03" />
+
 
 
 ---
