@@ -276,7 +276,7 @@
 
 ## 15. Sequence Diagrams
 
-แผนภาพแสดงลำดับขั้นตอนการทำงานและการรับส่งข้อมูล (Message Interaction Flow) ระหว่าง Frontend, Backend และฐานข้อมูล SQL ในฟังก์ชันหลักที่สำคัญ ได้แก่:
+แผนภาพแสดงลำดับขั้นตอนการทำงานและการรับส่งข้อมูล (Message Interaction Flow) ระหว่าง Frontend, Backend  ในฟังก์ชันหลักที่สำคัญ ได้แก่:
 
 <img width="2590" height="1980" alt="seque" src="https://github.com/user-attachments/assets/5e6f3873-cf64-44a0-ad7c-76f8bcf46a0b" />
 
