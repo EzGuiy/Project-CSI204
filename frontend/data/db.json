@@ -500,6 +500,15 @@
       "text": "หวัดดีควยไร",
       "timestamp": "20:53",
       "isRead": true
+    },
+    {
+      "id": "msg-1784720061582-agent",
+      "chatId": "u3",
+      "senderName": "พนักงาน ประจำร้าน",
+      "sender": "agent",
+      "text": "ครับ",
+      "timestamp": "18:34",
+      "isRead": true
     }
   ]
 }
