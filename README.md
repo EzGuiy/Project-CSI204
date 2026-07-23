@@ -85,7 +85,7 @@
 
 * 💻 **Frontend Architecture:** เลือกใช้ **Next.js (React Framework)** ร่วมกับ **Tailwind CSS** เพื่อความรวดเร็วในการโหลดหน้าเว็บ ด้วยคุณสมบัติการประมวลผลฝั่งเซิร์ฟเวอร์ (Server-Side Rendering) และการออกแบบ UI ที่แสดงผลได้สวยงาม เป็นมิตรต่อทุกอุปกรณ์ (Responsive Design)
 * ⚙️ **Backend Architecture:** เลือกใช้ **Node.js** ร่วมกับ **Express.js** ในการพัฒนา RESTful API ที่มีความยืดหยุ่น ประสิทธิภาพสูง และประมวลผลแบบทำงานไม่พร้อมกัน (Asynchronous) ได้อย่างรวดเร็ว
-* 🗄️ **Database Management:** เลือกใช้ **PostgreSQL** ซึ่งเป็นระบบจัดการฐานข้อมูลเชิงสัมพันธ์ (Relational Database Management System) เพื่อรองรับการบริหารและจัดเก็บข้อมูลที่มีความซับซ้อนและมีโครงสร้างความสัมพันธ์ที่ชัดเจน เช่น ข้อมูลสินค้า (Products), คำสั่งซื้อ (Orders) และข้อมูลผู้ใช้ (Users)
+* 🗄️ **Database Management:** เลือกใช้ **LocalStorage เก็บข้อมูลใน JSON ** ซึ่งเป็นระบบจัดการฐานข้อมูลเชิงสัมพันธ์ (Relational Database Management System) เพื่อรองรับการบริหารและจัดเก็บข้อมูลที่มีความซับซ้อนและมีโครงสร้างความสัมพันธ์ที่ชัดเจน เช่น ข้อมูลสินค้า (Products), คำสั่งซื้อ (Orders) และข้อมูลผู้ใช้ (Users)
 * 🐳 **Infrastructure & Tools:** เลือกใช้ **Docker** สำหรับการทำ Containerization เพื่อควบคุมและจำลองสภาพแวดล้อมในการพัฒนา (Environment) ให้มีความสม่ำเสมอและเหมือนกันทุกประการ ตั้งแต่เครื่องคอมพิวเตอร์ของทีมงานไปจนถึงระบบที่เปิดใช้งานจริง (Production) และเลือกใช้ **GitHub** ในการบริหารจัดการ Source Code (Version Control) และทำงานร่วมกันภายในทีม
 
 ---
